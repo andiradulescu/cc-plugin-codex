@@ -1,0 +1,13 @@
+{
+  "name": "cc-plugin-codex",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Codex plugin that delegates work to Claude Code via the local Claude CLI.",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  }
+}

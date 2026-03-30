@@ -1,0 +1,40 @@
+{
+  "name": "claude-code",
+  "version": "0.1.0",
+  "description": "Use Claude Code from Codex to delegate work to Opus, Sonnet, or Haiku through the local Claude CLI.",
+  "author": {
+    "name": "Local"
+  },
+  "license": "MIT",
+  "keywords": [
+    "claude",
+    "anthropic",
+    "opus",
+    "sonnet",
+    "haiku",
+    "coding"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Claude Code",
+    "shortDescription": "Delegate coding work from Codex to Claude Code",
+    "longDescription": "Use a plugin-local skill and runner script to hand focused tasks to Claude Code with explicit model selection for Opus, Sonnet, or Haiku.",
+    "developerName": "Local",
+    "category": "Coding",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://code.claude.com/docs/llms.txt",
+    "defaultPrompt": [
+      "Ask Claude Code Sonnet to take a second pass on this bugfix",
+      "Use Claude Code Opus to pressure-test this design",
+      "Use Claude Code Haiku for a quick review of these changes"
+    ],
+    "brandColor": "#D97706",
+    "composerIcon": "./assets/claude-code-small.svg",
+    "logo": "./assets/claude-code-logo.svg",
+    "screenshots": []
+  }
+}
