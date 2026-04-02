@@ -1,7 +1,7 @@
 {
-  "name": "claude-code-local",
+  "name": "claude-code",
   "interface": {
-    "displayName": "Claude Code Local"
+    "displayName": "Claude Code"
   },
   "plugins": [
     {
