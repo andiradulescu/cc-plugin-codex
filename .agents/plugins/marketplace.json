@@ -5,7 +5,7 @@
   },
   "plugins": [
     {
-      "name": "Claude Code",
+      "name": "claude-code",
       "source": {
         "source": "local",
         "path": "./plugins/claude-code"
