@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Codex plugin that delegates work to Claude Code via the local Claude CLI.",
   "scripts": {
+    "install:local": "node scripts/install-local.mjs",
     "test": "node --test tests/*.test.mjs"
   },
   "engines": {
