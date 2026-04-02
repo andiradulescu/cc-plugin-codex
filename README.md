@@ -5,7 +5,7 @@ This package adds a local Codex plugin that lets Codex delegate work to Claude C
 The plugin is implemented as a Codex skill plus a small runner script. That keeps the integration simple:
 
 - Codex decides when a Claude pass is useful.
-- The skill invokes `claude -p` in `--bare` mode.
+- The skill invokes `claude -p` with JSON output.
 - Model selection is explicit: `opus`, `sonnet`, or `haiku`.
 
 ## What is included
@@ -20,7 +20,6 @@ The plugin is implemented as a Codex skill plus a small runner script. That keep
 The runner uses the current Claude Code CLI flow documented on March 31, 2026:
 
 - `claude -p`
-- `--bare`
 - `--model`
 - `--output-format json`
 - `--continue` / `--resume`
