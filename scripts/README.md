@@ -1,3 +1,3 @@
 # Scripts
 
-- `install-local.mjs`: installs this repo's marketplace file to `~/.agents/plugins/marketplace.json` and the `claude-code` plugin to `~/.codex/plugins/claude-code`; default mode uses symlinks, and `--mode copy` copies files instead.
+- `install-local.mjs`: merges `claude-code` into `~/.agents/plugins/marketplace.json` by plugin name and points it at `./.codex/plugins/claude-code`, then installs the plugin to `~/.codex/plugins/claude-code`; default mode uses symlinks, and `--mode copy` copies files instead.

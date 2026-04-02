@@ -2,10 +2,50 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
+import { pathToFileURL } from "node:url";
 
 const REPO_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const PLUGIN_NAME = "claude-code";
 const ALLOWED_MODES = new Set(["copy", "symlink"]);
+
+function upsertPluginEntry(plugins, pluginEntry) {
+  const existingPlugins = Array.isArray(plugins) ? plugins : [];
+  const existingIndex = existingPlugins.findIndex((plugin) => plugin?.name === pluginEntry.name);
+
+  if (existingIndex === -1) {
+    return [...existingPlugins, pluginEntry];
+  }
+
+  return existingPlugins.map((plugin, index) => (index === existingIndex ? pluginEntry : plugin));
+}
+
+export function buildHomeMarketplace(repoMarketplace) {
+  return {
+    ...repoMarketplace,
+    plugins: repoMarketplace.plugins.map((plugin) => ({
+      ...plugin,
+      source: {
+        ...plugin.source,
+        path: plugin.name === PLUGIN_NAME ? `./.codex/plugins/${PLUGIN_NAME}` : plugin.source.path
+      }
+    }))
+  };
+}
+
+export function mergeHomeMarketplace({ repoMarketplace, existingMarketplace }) {
+  const homeMarketplace = buildHomeMarketplace(repoMarketplace);
+  if (!existingMarketplace) {
+    return homeMarketplace;
+  }
+
+  const [homePluginEntry] = homeMarketplace.plugins;
+  return {
+    ...repoMarketplace,
+    ...existingMarketplace,
+    interface: existingMarketplace.interface ?? repoMarketplace.interface,
+    plugins: upsertPluginEntry(existingMarketplace.plugins, homePluginEntry)
+  };
+}
 
 function parseArgs(argv) {
   let mode = "symlink";
@@ -53,6 +93,18 @@ async function readExistingSymlink(linkPath) {
   } catch (error) {
     if (error && error.code === "ENOENT") {
       return { exists: false, isSymlink: false, target: null };
+    }
+    throw error;
+  }
+}
+
+async function readJsonIfExists(filePath) {
+  try {
+    const contents = await fs.readFile(filePath, "utf8");
+    return JSON.parse(contents);
+  } catch (error) {
+    if (error && error.code === "ENOENT") {
+      return null;
     }
     throw error;
   }
@@ -126,25 +178,57 @@ async function copyPath({ sourcePath, targetPath, dryRun, force }) {
   console.log(`copied ${sourcePath} -> ${targetPath}`);
 }
 
+async function writeJsonFile({ filePath, value, dryRun, force }) {
+  const existing = await readExistingSymlink(filePath);
+
+  if (existing.exists && existing.isSymlink && !force) {
+    throw new Error(`Refusing to replace symlink without --force: ${filePath}`);
+  }
+
+  await ensureParentDir(filePath, { dryRun });
+
+  if (existing.exists && existing.isSymlink) {
+    if (dryRun) {
+      console.log(`[dry-run] rm ${filePath}`);
+    } else {
+      await fs.rm(filePath, { recursive: true, force: true });
+    }
+  }
+
+  const contents = `${JSON.stringify(value, null, 2)}\n`;
+  if (dryRun) {
+    console.log(`[dry-run] write ${filePath}`);
+    return;
+  }
+
+  await fs.writeFile(filePath, contents, "utf8");
+  console.log(`wrote ${filePath}`);
+}
+
 async function main() {
   const { dryRun, force, mode } = parseArgs(process.argv.slice(2));
   const home = os.homedir();
 
   const sourceMarketplace = path.join(REPO_ROOT, ".agents", "plugins", "marketplace.json");
   const sourcePlugin = path.join(REPO_ROOT, "plugins", PLUGIN_NAME);
+  const repoMarketplace = JSON.parse(await fs.readFile(sourceMarketplace, "utf8"));
 
   const targetMarketplace = path.join(home, ".agents", "plugins", "marketplace.json");
   const targetPlugin = path.join(home, ".codex", "plugins", PLUGIN_NAME);
+  const existingHomeMarketplace = await readJsonIfExists(targetMarketplace);
+  const homeMarketplace = mergeHomeMarketplace({
+    repoMarketplace,
+    existingMarketplace: existingHomeMarketplace
+  });
+
+  await writeJsonFile({
+    filePath: targetMarketplace,
+    value: homeMarketplace,
+    dryRun,
+    force
+  });
 
   if (mode === "symlink") {
-    await ensureSymlink({
-      sourcePath: sourceMarketplace,
-      linkPath: targetMarketplace,
-      type: "file",
-      dryRun,
-      force
-    });
-
     await ensureSymlink({
       sourcePath: sourcePlugin,
       linkPath: targetPlugin,
@@ -156,13 +240,6 @@ async function main() {
   }
 
   await copyPath({
-    sourcePath: sourceMarketplace,
-    targetPath: targetMarketplace,
-    dryRun,
-    force
-  });
-
-  await copyPath({
     sourcePath: sourcePlugin,
     targetPath: targetPlugin,
     dryRun,
@@ -170,7 +247,9 @@ async function main() {
   });
 }
 
-main().catch((error) => {
-  console.error(error.message);
-  process.exitCode = 1;
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    console.error(error.message);
+    process.exitCode = 1;
+  });
+}
