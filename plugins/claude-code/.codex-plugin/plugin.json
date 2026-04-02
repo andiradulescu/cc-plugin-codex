@@ -5,7 +5,10 @@
   "author": {
     "name": "Andrei Radulescu",
     "email": "andi.radulescu@gmail.com",
+    "url": "https://github.com/andiradulescu"
   },
+  "homepage": "https://github.com/andiradulescu/cc-plugin-codex",
+  "repository": "https://github.com/andiradulescu/cc-plugin-codex",
   "license": "MIT",
   "keywords": [
     "claude",
