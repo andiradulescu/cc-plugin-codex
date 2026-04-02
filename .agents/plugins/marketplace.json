@@ -1,11 +1,11 @@
 {
-  "name": "claude-code",
+  "name": "cc-plugin-codex",
   "interface": {
-    "displayName": "Claude Code"
+    "displayName": "Claude Code plugin for Codex"
   },
   "plugins": [
     {
-      "name": "claude-code",
+      "name": "Claude Code",
       "source": {
         "source": "local",
         "path": "./plugins/claude-code"
