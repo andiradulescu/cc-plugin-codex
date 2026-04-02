@@ -18,7 +18,7 @@ function printUsage() {
     [
       "Usage:",
       "  node claude-code-bridge.mjs setup [--json]",
-      "  node claude-code-bridge.mjs run [--model <model>] [--effort <level>] [--cwd <path>] [--prompt <text>|--prompt-file <path>] [--continue] [--resume <session-id>] [--json]"
+      "  node claude-code-bridge.mjs run [--model <model>] [--effort <level>] [--cwd <path>] [--prompt <text>|--prompt-file <path>] [--permission-mode <mode>] [--continue] [--resume <session-id>] [--json]"
     ].join("\n") + "\n"
   );
 }
@@ -107,6 +107,7 @@ function handleRun(options) {
     effort: options.effort,
     continueLast: Boolean(options.continue),
     resume: options.resume,
+    permissionMode: options["permission-mode"],
     appendSystemPromptFile: options["append-system-prompt-file"],
     systemPromptFile: options["system-prompt-file"],
     jsonSchemaFile: options["json-schema-file"],

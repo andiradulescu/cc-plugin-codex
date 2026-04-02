@@ -64,9 +64,23 @@ export function normalizeEffort(effort) {
   return normalized;
 }
 
+export const SANDBOX_SETTINGS = JSON.stringify({
+  sandbox: {
+    enabled: true,
+    autoAllow: true,
+    allowUnsandboxedCommands: false
+  }
+});
+
 export function buildClaudeArgs(options) {
   const prompt = readPrompt(options);
-  const args = ["--bare", "--print", prompt, "--output-format", "json", "--permission-mode", "bypassPermissions"];
+  const permissionMode = trimToNull(options.permissionMode) ?? "acceptEdits";
+  const args = [
+    "--print", prompt,
+    "--output-format", "json",
+    "--permission-mode", permissionMode,
+    "--settings", SANDBOX_SETTINGS
+  ];
 
   const model = trimToNull(options.model) ?? DEFAULT_MODEL;
   if (model) {
