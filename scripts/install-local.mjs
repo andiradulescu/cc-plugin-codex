@@ -8,7 +8,7 @@ const PLUGIN_NAME = "claude-code";
 const ALLOWED_MODES = new Set(["copy", "symlink"]);
 
 function parseArgs(argv) {
-  let mode = "copy";
+  let mode = "symlink";
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
