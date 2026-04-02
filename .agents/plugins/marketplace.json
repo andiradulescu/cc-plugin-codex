@@ -1,7 +1,7 @@
 {
-  "name": "cc-plugin-codex",
+  "name": "local-plugins",
   "interface": {
-    "displayName": "Claude Code plugin for Codex"
+    "displayName": "Local Plugins"
   },
   "plugins": [
     {
