@@ -40,8 +40,8 @@ test("buildClaudeArgs adds the documented Claude Code flags", () => {
     resume: "session-123"
   });
 
-  assert.deepEqual(args.slice(0, 6), ["--bare", "--print", "Review this patch", "--output-format", "json", "--permission-mode"]);
-  assert.match(args.join(" "), /bypassPermissions/);
+  assert.deepEqual(args.slice(0, 6), ["--print", "Review this patch", "--output-format", "json", "--permission-mode", "acceptEdits"]);
+  assert.match(args.join(" "), /acceptEdits/);
   assert.match(args.join(" "), /--model opus/);
   assert.match(args.join(" "), /--effort high/);
   assert.match(args.join(" "), /--continue/);
