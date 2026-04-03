@@ -49,7 +49,9 @@ To preview what would happen without writing anything:
 npm run install:local -- --dry-run
 ```
 
-4. Restart Codex. The "Claude Code" plugin should appear in your plugin list.
+4. Activate the plugin in Codex:
+   - **Codex app**: go to **Plugins > Local Plugins** and activate "Claude Code"
+   - **Codex CLI**: type `/plugins`, select **Claude Code**, then **Install plugin**
 
 ## What is included
 
