@@ -50,8 +50,18 @@ npm run install:local -- --dry-run
 ```
 
 4. Activate the plugin in Codex:
-   - **Codex app**: go to **Plugins > Local Plugins** and activate "Claude Code"
-   - **Codex CLI**: type `/plugins`, select **Claude Code**, then **Install plugin**
+
+- **Codex app**: go to **Plugins > Local Plugins** and activate "Claude Code"
+
+<img width="720" alt="Codex app Claude Code plugin install" src="https://github.com/user-attachments/assets/67a64a45-1dd3-4028-bb00-64bc8800bb91" />
+
+<img width="720" alt="Codex app Claude Code plugin use" src="https://github.com/user-attachments/assets/28cc722f-09d8-424b-ae2f-7c6bbd6a557b" />
+
+- **Codex CLI**: type `/plugins`, select **Claude Code**, then **Install plugin**
+
+<img width="720" alt="Codex CLI Claude Code plugin install" src="https://github.com/user-attachments/assets/6611b83b-19c5-4760-b569-c6bf2dee106e" />
+
+<img width="720" alt="Codex CLI Claude Code plugin use" src="https://github.com/user-attachments/assets/d69a15cf-24b1-47ab-b562-23a7b24ec904" />
 
 ## What is included
 
