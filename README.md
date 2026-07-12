@@ -11,24 +11,64 @@ The plugin is implemented as a Codex skill plus a small runner script. That keep
 ## Prerequisites
 
 - Node.js >= 22
+- Codex CLI, the ChatGPT desktop app, or the Codex IDE extension with plugin support
 - [Claude Code CLI](https://code.claude.com/docs/en/overview) installed and authenticated
 - Claude Code >= 2.1.170 to use Claude Fable 5
 
 ## Install
 
-1. Install Claude Code if needed:
+### Set up Claude Code
+
+Install Claude Code if needed:
 
 ```bash
 npm install -g @anthropic-ai/claude-code
 ```
 
-2. Authenticate once:
+Authenticate once:
 
 ```bash
 claude auth login
 ```
 
-3. Clone this repo and install the plugin into your local Codex marketplace:
+### Add the plugin marketplace
+
+Add this repository as a Codex marketplace:
+
+```bash
+codex plugin marketplace add andiradulescu/cc-plugin-codex --ref main
+```
+
+The marketplace name is `local-plugins`.
+
+### Codex CLI
+
+Install the plugin directly:
+
+```bash
+codex plugin add claude-code@local-plugins
+```
+
+Alternatively, start Codex, type `/plugins`, choose the **Local Plugins** marketplace, and install **Claude Code**. Start a new Codex session after installation so the bundled skill becomes available.
+
+### ChatGPT desktop app
+
+Add the marketplace with the Codex command above, or follow the local development steps below to register a personal marketplace. Then:
+
+1. Restart the ChatGPT desktop app.
+2. Open **Plugins** in the ChatGPT desktop app.
+3. Choose the **Local Plugins** marketplace and install **Claude Code**.
+4. Start a new task after installation.
+
+The plugin directory is available from Work and Codex, but this plugin launches the machine-local Claude Code CLI. Use it from a Codex environment that has access to the local `claude` executable and authenticated session.
+
+### Codex IDE extension
+
+Open **Settings > Plugins**, choose the **Local Plugins** marketplace, and install **Claude Code** for the connected Codex host. Start a new chat after installation.
+
+### Local development
+
+Clone the repository and register its marketplace as a personal local source:
 
 ```bash
 git clone https://github.com/andiradulescu/cc-plugin-codex.git
@@ -36,9 +76,11 @@ cd cc-plugin-codex
 npm run install:local
 ```
 
-This merges the plugin entry into `~/.agents/plugins/marketplace.json` and symlinks the plugin directory into `~/.codex/plugins/claude-code`. Running it again is safe (idempotent).
+The helper merges the plugin entry into `~/.agents/plugins/marketplace.json` and symlinks the plugin directory into `~/.codex/plugins/claude-code`. It registers the marketplace source but does not install or enable the plugin. Finish with `codex plugin add claude-code@local-plugins` or install it from the desktop plugin directory.
 
-To copy files instead of symlinking:
+The ChatGPT desktop app installs a cached copy of a local plugin instead of loading directly from the marketplace source. Restart the app after changing the plugin so it refreshes the installed copy.
+
+To copy files, which matches OpenAI's documented manual local-install layout, instead of symlinking:
 
 ```bash
 npm run install:local -- --mode copy
@@ -50,19 +92,16 @@ To preview what would happen without writing anything:
 npm run install:local -- --dry-run
 ```
 
-4. Activate the plugin in Codex:
+### Surface limits
 
-- **Codex app**: go to **Plugins > Local Plugins** and activate "Claude Code"
+ChatGPT Work on the web can install published or curated plugins, but OpenAI documents local filesystem marketplaces for the ChatGPT desktop app. This repository is a skill-only plugin with a local CLI runner, not an Apps SDK app, and does not use ChatGPT developer mode or an HTTPS MCP endpoint.
 
-<img width="720" alt="Codex app Claude Code plugin install" src="https://github.com/user-attachments/assets/67a64a45-1dd3-4028-bb00-64bc8800bb91" />
+OpenAI references:
 
-<img width="720" alt="Codex app Claude Code plugin use" src="https://github.com/user-attachments/assets/28cc722f-09d8-424b-ae2f-7c6bbd6a557b" />
-
-- **Codex CLI**: type `/plugins`, select **Claude Code**, then **Install plugin**
-
-<img width="720" alt="Codex CLI Claude Code plugin install" src="https://github.com/user-attachments/assets/6611b83b-19c5-4760-b569-c6bf2dee106e" />
-
-<img width="720" alt="Codex CLI Claude Code plugin use" src="https://github.com/user-attachments/assets/d69a15cf-24b1-47ab-b562-23a7b24ec904" />
+- [Use and install plugins](https://developers.openai.com/codex/plugins)
+- [Build and install local plugins](https://developers.openai.com/codex/plugins/build)
+- [Codex plugin commands](https://developers.openai.com/codex/developer-commands#codex-plugin)
+- [Connect an Apps SDK app](https://developers.openai.com/apps-sdk/deploy/connect-chatgpt)
 
 ## What is included
 
