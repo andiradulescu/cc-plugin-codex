@@ -6,12 +6,13 @@ The plugin is implemented as a Codex skill plus a small runner script. That keep
 
 - Codex decides when a Claude pass is useful.
 - The skill invokes `claude -p` with JSON output.
-- Model selection is explicit: `opus`, `sonnet`, or `haiku`.
+- Model selection is explicit: `fable`, `opus`, `sonnet`, or `haiku`.
 
 ## Prerequisites
 
 - Node.js >= 22
-- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) installed and authenticated
+- [Claude Code CLI](https://code.claude.com/docs/en/overview) installed and authenticated
+- Claude Code >= 2.1.170 to use Claude Fable 5
 
 ## Install
 
@@ -70,17 +71,35 @@ npm run install:local -- --dry-run
 - A skill that teaches Codex when and how to call Claude Code
 - A helper script that handles `claude` availability, auth checks, model selection, and JSON output parsing
 
+## Claude Fable 5
+
+Select Fable explicitly with `--model fable` for complex, long-running work. The bridge also accepts Fable's `xhigh` effort level:
+
+```bash
+node plugins/claude-code/skills/claude-code-bridge/scripts/claude-code-bridge.mjs run \
+  --model fable \
+  --effort xhigh \
+  --prompt "Investigate and fix this complex failure" \
+  --json
+```
+
+Fable requires 30-day data retention and is unavailable under zero data retention. Its safety classifiers can automatically fall back to Opus 4.8 for cybersecurity and biology requests.
+
 ## Claude Code integration surface
 
-The runner uses the current Claude Code CLI flow documented on March 31, 2026:
+The runner uses the current Claude Code CLI flow documented on July 12, 2026:
 
 - `claude -p`
-- `--model`
+- `--model fable`
+- `--effort xhigh`
 - `--output-format json`
 - `--continue` / `--resume`
 - `claude auth status`
 
-Source: https://code.claude.com/docs/llms.txt
+Sources:
+
+- https://code.claude.com/docs/en/model-config
+- https://code.claude.com/docs/en/cli-usage
 
 ## Test
 

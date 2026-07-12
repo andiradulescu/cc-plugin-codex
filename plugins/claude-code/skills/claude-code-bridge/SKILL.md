@@ -1,6 +1,6 @@
 ---
 name: claude-code-bridge
-description: Use Claude Code from Codex when the user explicitly asks for Claude, Anthropic, Opus, Sonnet, Haiku, or a second opinion from Claude Code on coding work.
+description: Use Claude Code from Codex when the user explicitly asks for Claude, Anthropic, Fable, Opus, Sonnet, Haiku, or a second opinion from Claude Code on coding work.
 ---
 
 # Claude Code Bridge
@@ -10,15 +10,22 @@ Use this skill when the user wants work delegated to Claude Code instead of stay
 ## When to use
 
 - The user explicitly asks for Claude Code.
-- The user asks for `Opus`, `Sonnet`, or `Haiku`.
+- The user asks for `Fable`, `Opus`, `Sonnet`, or `Haiku`.
 - The user wants a second model pass on code review, architecture, debugging, or implementation.
 - A focused external opinion is useful before making or validating changes.
 
 ## Model routing
 
+- `fable`: use Claude Fable 5 for complex, long-running work that benefits from sustained autonomous investigation and verification.
 - `sonnet`: default for normal implementation, review, and debugging work.
 - `opus`: use for harder architectural reasoning, deeper debugging, or pressure-testing a design.
 - `haiku`: use for quick lightweight passes, short summaries, and cheap sanity checks.
+
+## Fable requirements
+
+- Claude Fable 5 requires Claude Code 2.1.170 or later. Check the version returned by `setup`; if it is older, tell the user to run `claude update` before using Fable.
+- Fable requires 30-day data retention and is unavailable under zero data retention.
+- Cybersecurity and biology requests can trigger automatic safety fallback to Opus 4.8. Treat that fallback as expected Claude Code behavior.
 
 ## Runtime
 
@@ -29,6 +36,8 @@ node <path-to-skill>/scripts/claude-code-bridge.mjs setup --json
 ```
 
 Then run Claude Code:
+
+Use `--model fable` when the user requests Claude Fable 5.
 
 ```bash
 node <path-to-skill>/scripts/claude-code-bridge.mjs run \
@@ -66,6 +75,7 @@ node <path-to-skill>/scripts/claude-code-bridge.mjs run \
 
 ## Examples
 
+- "Use Claude Fable to investigate and fix this complex cross-service failure."
 - "Use Claude Code Opus to challenge this database migration plan."
 - "Ask Claude Code Sonnet to review the current diff for regressions."
 - "Use Claude Code Haiku to summarize the likely cause of this test failure."

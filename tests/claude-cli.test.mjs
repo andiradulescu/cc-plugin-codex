@@ -48,6 +48,17 @@ test("buildClaudeArgs adds the documented Claude Code flags", () => {
   assert.match(args.join(" "), /--resume session-123/);
 });
 
+test("buildClaudeArgs accepts xhigh effort for Claude Fable", () => {
+  const args = buildClaudeArgs({
+    prompt: "Investigate this complex failure",
+    model: "fable",
+    effort: "xhigh"
+  });
+
+  assert.match(args.join(" "), /--model fable/);
+  assert.match(args.join(" "), /--effort xhigh/);
+});
+
 test("parseClaudeJson extracts result and session id", () => {
   const parsed = parseClaudeJson(
     JSON.stringify({
