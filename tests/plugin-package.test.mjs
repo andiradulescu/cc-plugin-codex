@@ -13,6 +13,13 @@ async function readJson(relativePath) {
   return JSON.parse(contents);
 }
 
+test("marketplace has a stable public identity", async () => {
+  const marketplace = await readJson(".agents/plugins/marketplace.json");
+
+  assert.equal(marketplace.name, "claude-code-for-codex");
+  assert.equal(marketplace.interface.displayName, "Claude Code for Codex");
+});
+
 test("marketplace entry matches the packaged plugin manifest", async () => {
   const marketplace = await readJson(".agents/plugins/marketplace.json");
   const [plugin] = marketplace.plugins;

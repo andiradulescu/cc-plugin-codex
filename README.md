@@ -39,17 +39,17 @@ Add this repository as a Codex marketplace:
 codex plugin marketplace add andiradulescu/cc-plugin-codex --ref main
 ```
 
-The marketplace name is `local-plugins`.
+The marketplace name is `claude-code-for-codex`.
 
 ### Codex CLI
 
 Install the plugin directly:
 
 ```bash
-codex plugin add claude-code@local-plugins
+codex plugin add claude-code@claude-code-for-codex
 ```
 
-Alternatively, start Codex, type `/plugins`, choose the **Local Plugins** marketplace, and install **Claude Code**. Start a new Codex session after installation so the bundled skill becomes available.
+Alternatively, start Codex, type `/plugins`, choose the **Claude Code for Codex** marketplace, and install **Claude Code**. Start a new Codex session after installation so the bundled skill becomes available.
 
 ### ChatGPT desktop app
 
@@ -57,14 +57,14 @@ Add the marketplace with the Codex command above, or follow the local developmen
 
 1. Restart the ChatGPT desktop app.
 2. Open **Plugins** in the ChatGPT desktop app.
-3. Choose the **Local Plugins** marketplace and install **Claude Code**.
+3. Choose the **Claude Code for Codex** marketplace and install **Claude Code**. If the local helper preserved an existing personal marketplace, choose that marketplace's existing title instead.
 4. Start a new task after installation.
 
 The plugin directory is available from Work and Codex, but this plugin launches the machine-local Claude Code CLI. Use it from a Codex environment that has access to the local `claude` executable and authenticated session.
 
 ### Codex IDE extension
 
-Open **Settings > Plugins**, choose the **Local Plugins** marketplace, and install **Claude Code** for the connected Codex host. Start a new chat after installation.
+Open **Settings > Plugins**, choose the **Claude Code for Codex** marketplace, and install **Claude Code** for the connected Codex host. If the local helper preserved an existing personal marketplace, choose that marketplace's existing title instead. Start a new chat after installation.
 
 ### Local development
 
@@ -76,7 +76,7 @@ cd cc-plugin-codex
 npm run install:local
 ```
 
-The helper merges the plugin entry into `~/.agents/plugins/marketplace.json` and symlinks the plugin directory into `~/.codex/plugins/claude-code`. It registers the marketplace source but does not install or enable the plugin. Finish with `codex plugin add claude-code@local-plugins` or install it from the desktop plugin directory.
+The helper merges the plugin entry into `~/.agents/plugins/marketplace.json` and symlinks the plugin directory into `~/.codex/plugins/claude-code`. It registers the marketplace source but does not install or enable the plugin. It prints the exact `codex plugin add` command for the resulting marketplace, including an existing personal marketplace name when one is already configured. Run that command or install the plugin from the desktop plugin directory.
 
 The ChatGPT desktop app installs a cached copy of a local plugin instead of loading directly from the marketplace source. Restart the app after changing the plugin so it refreshes the installed copy.
 
