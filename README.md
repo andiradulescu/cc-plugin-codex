@@ -36,7 +36,7 @@ claude auth login
 Add this repository as a Codex marketplace:
 
 ```bash
-codex plugin marketplace add andiradulescu/cc-plugin-codex --ref main
+codex plugin marketplace add andiradulescu/cc-plugin-codex
 ```
 
 The marketplace name is `cc-plugin-codex`.
