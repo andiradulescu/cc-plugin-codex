@@ -33,7 +33,7 @@ test("local installer prints the install command for a fresh marketplace", async
 
   const { stdout } = await runInstaller(home, "--dry-run");
 
-  assert.match(stdout, /codex plugin add claude-code@claude-code-for-codex/);
+  assert.match(stdout, /codex plugin add claude-code@cc-plugin-codex/);
 });
 
 test("local installer prints the preserved command for an existing marketplace", async (context) => {
@@ -50,7 +50,7 @@ test("local installer prints the preserved command for an existing marketplace",
   const { stdout } = await runInstaller(home, "--dry-run");
 
   assert.match(stdout, /codex plugin add claude-code@local-plugins/);
-  assert.doesNotMatch(stdout, /codex plugin add claude-code@claude-code-for-codex/);
+  assert.doesNotMatch(stdout, /codex plugin add claude-code@cc-plugin-codex/);
 });
 
 test("personal marketplace points at the home-local plugin install path", async () => {

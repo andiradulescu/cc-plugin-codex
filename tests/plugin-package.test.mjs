@@ -16,7 +16,7 @@ async function readJson(relativePath) {
 test("marketplace has a stable public identity", async () => {
   const marketplace = await readJson(".agents/plugins/marketplace.json");
 
-  assert.equal(marketplace.name, "claude-code-for-codex");
+  assert.equal(marketplace.name, "cc-plugin-codex");
   assert.equal(marketplace.interface.displayName, "Claude Code for Codex");
 });
 

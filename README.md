@@ -39,14 +39,14 @@ Add this repository as a Codex marketplace:
 codex plugin marketplace add andiradulescu/cc-plugin-codex --ref main
 ```
 
-The marketplace name is `claude-code-for-codex`.
+The marketplace name is `cc-plugin-codex`.
 
 ### Codex CLI
 
 Install the plugin directly:
 
 ```bash
-codex plugin add claude-code@claude-code-for-codex
+codex plugin add claude-code@cc-plugin-codex
 ```
 
 Alternatively, start Codex, type `/plugins`, choose the **Claude Code for Codex** marketplace, and install **Claude Code**. Start a new Codex session after installation so the bundled skill becomes available.
