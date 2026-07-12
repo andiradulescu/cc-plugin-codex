@@ -28,3 +28,11 @@ test("marketplace entry matches the packaged plugin manifest", async () => {
   assert.equal(manifest.interface.displayName, "Claude Code");
   assert.equal(manifest.skills, "./skills/");
 });
+
+test("packaged plugin advertises Claude Fable", async () => {
+  const manifest = await readJson("plugins/claude-code/.codex-plugin/plugin.json");
+
+  assert.ok(manifest.keywords.includes("fable"));
+  assert.match(manifest.description, /Fable/);
+  assert.ok(manifest.interface.defaultPrompt.some((prompt) => prompt.includes("Fable")));
+});

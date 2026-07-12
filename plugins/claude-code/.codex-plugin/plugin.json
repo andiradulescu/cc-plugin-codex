@@ -1,7 +1,7 @@
 {
   "name": "claude-code",
   "version": "0.1.0",
-  "description": "Use Claude Code from Codex to delegate work to Opus, Sonnet, or Haiku through the local Claude CLI.",
+  "description": "Use Claude Code from Codex to delegate work to Fable, Opus, Sonnet, or Haiku through the local Claude CLI.",
   "author": {
     "name": "Andrei Radulescu",
     "email": "andi.radulescu@gmail.com",
@@ -13,6 +13,7 @@
   "keywords": [
     "claude",
     "anthropic",
+    "fable",
     "opus",
     "sonnet",
     "haiku",
@@ -32,6 +33,7 @@
     ],
     "websiteURL": "https://github.com/andiradulescu/cc-plugin-codex/",
     "defaultPrompt": [
+      "Use Claude Fable for a complex, long-running coding task",
       "Use Claude Code Opus to pressure-test this design",
       "Ask Claude Code Sonnet to take a second pass on this bugfix",
       "Use Claude Code Haiku for a quick review of these changes"
