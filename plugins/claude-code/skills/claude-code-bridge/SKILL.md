@@ -21,6 +21,12 @@ Use this skill when the user wants work delegated to Claude Code instead of stay
 - `opus`: use for harder architectural reasoning, deeper debugging, or pressure-testing a design.
 - `haiku`: use for quick lightweight passes, short summaries, and cheap sanity checks.
 
+## Fable requirements
+
+- Claude Fable 5 requires Claude Code 2.1.170 or later. Check the version returned by `setup`; if it is older, tell the user to run `claude update` before using Fable.
+- Fable requires 30-day data retention and is unavailable under zero data retention.
+- Cybersecurity and biology requests can trigger automatic safety fallback to Opus 4.8. Treat that fallback as expected Claude Code behavior.
+
 ## Runtime
 
 Use the plugin-local helper:

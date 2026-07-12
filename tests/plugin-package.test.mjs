@@ -45,3 +45,12 @@ test("packaged skill routes Fable requests through Claude Code", async () => {
   assert.match(skill, /`fable`: use Claude Fable 5/);
   assert.match(skill, /--model fable/);
 });
+
+test("packaged skill documents Claude Fable operating constraints", async () => {
+  const skillPath = path.join(repoRoot, "plugins/claude-code/skills/claude-code-bridge/SKILL.md");
+  const skill = await fs.readFile(skillPath, "utf8");
+
+  assert.match(skill, /2\.1\.170/);
+  assert.match(skill, /30-day data retention/);
+  assert.match(skill, /fallback to Opus 4\.8/);
+});
