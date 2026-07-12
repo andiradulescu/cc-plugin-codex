@@ -236,15 +236,16 @@ async function main() {
       dryRun,
       force
     });
-    return;
+  } else {
+    await copyPath({
+      sourcePath: sourcePlugin,
+      targetPath: targetPlugin,
+      dryRun,
+      force
+    });
   }
 
-  await copyPath({
-    sourcePath: sourcePlugin,
-    targetPath: targetPlugin,
-    dryRun,
-    force
-  });
+  console.log(`Install with: codex plugin add ${PLUGIN_NAME}@${homeMarketplace.name}`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
