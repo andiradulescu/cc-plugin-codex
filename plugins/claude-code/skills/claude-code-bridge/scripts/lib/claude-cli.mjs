@@ -4,7 +4,8 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 
 export const DEFAULT_MODEL = "sonnet";
-export const ALLOWED_EFFORTS = new Set(["low", "medium", "high", "max"]);
+// Source: https://code.claude.com/docs/en/model-config#adjust-effort-level
+export const ALLOWED_EFFORTS = new Set(["low", "medium", "high", "xhigh", "max"]);
 
 function trimToNull(value) {
   if (value == null) {
@@ -59,7 +60,7 @@ export function normalizeEffort(effort) {
     return null;
   }
   if (!ALLOWED_EFFORTS.has(normalized)) {
-    throw new Error("Unsupported effort. Use one of: low, medium, high, max.");
+    throw new Error(`Unsupported effort. Use one of: ${[...ALLOWED_EFFORTS].join(", ")}.`);
   }
   return normalized;
 }
