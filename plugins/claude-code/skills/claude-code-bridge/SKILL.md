@@ -75,6 +75,7 @@ node <path-to-skill>/scripts/claude-code-bridge.mjs run \
 
 ## Examples
 
+- "Use Claude Fable to investigate and fix this complex cross-service failure."
 - "Use Claude Code Opus to challenge this database migration plan."
 - "Ask Claude Code Sonnet to review the current diff for regressions."
 - "Use Claude Code Haiku to summarize the likely cause of this test failure."
