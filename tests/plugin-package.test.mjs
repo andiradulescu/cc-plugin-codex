@@ -36,3 +36,12 @@ test("packaged plugin advertises Claude Fable", async () => {
   assert.match(manifest.description, /Fable/);
   assert.ok(manifest.interface.defaultPrompt.some((prompt) => prompt.includes("Fable")));
 });
+
+test("packaged skill routes Fable requests through Claude Code", async () => {
+  const skillPath = path.join(repoRoot, "plugins/claude-code/skills/claude-code-bridge/SKILL.md");
+  const skill = await fs.readFile(skillPath, "utf8");
+
+  assert.match(skill, /^description: .*Fable/m);
+  assert.match(skill, /`fable`: use Claude Fable 5/);
+  assert.match(skill, /--model fable/);
+});
