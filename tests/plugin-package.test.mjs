@@ -49,8 +49,7 @@ test("packaged skill routes Fable requests through Claude Code", async () => {
   const skill = await fs.readFile(skillPath, "utf8");
 
   assert.match(skill, /^description: .*Fable/m);
-  assert.match(skill, /`fable`: use Claude Fable 5/);
-  assert.match(skill, /--model fable/);
+  assert.match(skill, /`fable`: use Claude Fable for/);
 });
 
 test("packaged skill documents Claude Fable operating constraints", async () => {
@@ -60,4 +59,23 @@ test("packaged skill documents Claude Fable operating constraints", async () => 
   assert.match(skill, /2\.1\.170/);
   assert.match(skill, /30-day data retention/);
   assert.match(skill, /fallback to Opus 4\.8/);
+});
+
+test("packaged skill avoids unnecessary Claude setup checks", async () => {
+  const skillPath = path.join(repoRoot, "plugins/claude-code/skills/claude-code-bridge/SKILL.md");
+  const skill = await fs.readFile(skillPath, "utf8");
+
+  assert.match(skill, /Run Claude Code directly without a setup preflight\./);
+  assert.match(skill, /Run `setup` only after a failed run/);
+  assert.doesNotMatch(skill, /Run `setup` before Fable/);
+  assert.match(skill, /Use `--prompt` for short prompts/);
+  assert.match(skill, /remaining bridge commands in the current turn/);
+});
+
+test("packaged documentation uses the concise Fable name", async () => {
+  const rootReadme = await fs.readFile(path.join(repoRoot, "README.md"), "utf8");
+  const pluginReadme = await fs.readFile(path.join(repoRoot, "plugins/claude-code/README.md"), "utf8");
+
+  assert.match(rootReadme, /^## Claude Fable$/m);
+  assert.match(pluginReadme, /Claude Fable requires Claude Code/);
 });

@@ -16,35 +16,33 @@ Use this skill when the user wants work delegated to Claude Code instead of stay
 
 ## Model routing
 
-- `fable`: use Claude Fable 5 for complex, long-running work that benefits from sustained autonomous investigation and verification.
+- `fable`: use Claude Fable for complex, long-running work that benefits from sustained autonomous investigation and verification.
 - `sonnet`: default for normal implementation, review, and debugging work.
 - `opus`: use for harder architectural reasoning, deeper debugging, or pressure-testing a design.
 - `haiku`: use for quick lightweight passes, short summaries, and cheap sanity checks.
 
 ## Fable requirements
 
-- Claude Fable 5 requires Claude Code 2.1.170 or later. Check the version returned by `setup`; if it is older, tell the user to run `claude update` before using Fable.
+- Claude Fable requires Claude Code 2.1.170 or later. If a Fable run fails, use `setup` to check the installed version; if it is older, tell the user to run `claude update`.
 - Fable requires 30-day data retention and is unavailable under zero data retention.
 - Cybersecurity and biology requests can trigger automatic safety fallback to Opus 4.8. Treat that fallback as expected Claude Code behavior.
 
 ## Runtime
 
-Use the plugin-local helper for setup. When it reports a host execution requirement, follow the failure handling below.
-
-```bash
-node <path-to-skill>/scripts/claude-code-bridge.mjs setup --json
-```
-
-Then run Claude Code:
-
-Use `--model fable` when the user requests Claude Fable 5.
+Run Claude Code directly without a setup preflight.
 
 ```bash
 node <path-to-skill>/scripts/claude-code-bridge.mjs run \
   --model sonnet \
   --cwd /absolute/worktree/path \
-  --prompt-file /absolute/path/to/prompt.txt \
+  --prompt "Review this change" \
   --json
+```
+
+Run `setup` only after a failed run to diagnose the Claude CLI version, installation, or authentication.
+
+```bash
+node <path-to-skill>/scripts/claude-code-bridge.mjs setup --json
 ```
 
 ## Prompting rules
@@ -53,6 +51,7 @@ node <path-to-skill>/scripts/claude-code-bridge.mjs run \
 - Include the exact repository or working directory via `--cwd`.
 - Tell Claude Code whether the task is read-only analysis or it may edit files.
 - For review tasks, ask for findings ordered by severity and request missing-test coverage.
+- Use `--prompt` for short prompts.
 - For large prompts, write them to a temp file and use `--prompt-file`.
 
 ## Session reuse
@@ -69,6 +68,7 @@ node <path-to-skill>/scripts/claude-code-bridge.mjs run \
 ## Failure handling
 
 - If a command returns `requiresHostExecution: true` with error code `host_execution_required`, rerun that exact command with scoped sandbox escalation.
+- After the first host execution requirement, use scoped host execution directly for remaining bridge commands in the current turn.
 - If scoped host execution is unavailable or denied, explain that the local Claude Code bridge cannot access host authentication from the current sandbox.
 - If `setup` reports Claude Code missing, tell the user to install `@anthropic-ai/claude-code`.
 - If `setup` reports unauthenticated after it ran outside the Codex sandbox, tell the user to run `claude auth login`.
