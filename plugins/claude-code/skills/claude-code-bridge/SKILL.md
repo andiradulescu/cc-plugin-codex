@@ -29,9 +29,7 @@ Use this skill when the user wants work delegated to Claude Code instead of stay
 
 ## Runtime
 
-Run both helper commands outside the Codex sandbox with scoped sandbox escalation. The outer sandbox cannot access host credential stores such as the macOS Keychain or make the required network request. Claude Code still runs its own configured sandbox for delegated tool use.
-
-Use the plugin-local helper for setup:
+Use the plugin-local helper for setup. When it reports a host execution requirement, follow the failure handling below.
 
 ```bash
 node <path-to-skill>/scripts/claude-code-bridge.mjs setup --json

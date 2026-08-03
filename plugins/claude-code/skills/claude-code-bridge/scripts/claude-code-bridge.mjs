@@ -67,7 +67,22 @@ function output(payload, asJson) {
   process.stdout.write(payload);
 }
 
+function exitIfHostExecutionRequired(options, payload) {
+  const requirement = buildHostExecutionRequirement();
+  if (!requirement.requiresHostExecution) {
+    return;
+  }
+
+  if (options.json) {
+    output({ ...payload, ...requirement }, true);
+  } else {
+    output(`${requirement.error.message}\n`, false);
+  }
+  process.exit(1);
+}
+
 function handleSetup(options) {
+  exitIfHostExecutionRequired(options, { ready: false });
   const report = buildSetupReport();
   if (options.json) {
     output(report, true);
@@ -98,15 +113,7 @@ function handleSetup(options) {
 }
 
 function handleRun(options) {
-  const hostExecution = buildHostExecutionRequirement();
-  if (hostExecution.requiresHostExecution) {
-    if (options.json) {
-      output({ ok: false, ...hostExecution }, true);
-    } else {
-      output(`${hostExecution.error.message}\n`, false);
-    }
-    process.exit(1);
-  }
+  exitIfHostExecutionRequired(options, { ok: false });
 
   const stdin = readStdinIfPiped();
   const cwd = options.cwd ? path.resolve(options.cwd) : process.cwd();

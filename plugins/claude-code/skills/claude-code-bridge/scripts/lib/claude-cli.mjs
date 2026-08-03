@@ -179,14 +179,6 @@ export function runChecked(command, args, { cwd, env = process.env } = {}) {
 }
 
 export function buildSetupReport({ env = process.env, cwd = process.cwd(), homeDir, existsSync } = {}) {
-  const hostExecution = buildHostExecutionRequirement({ env });
-  if (hostExecution.requiresHostExecution) {
-    return {
-      ready: false,
-      ...hostExecution
-    };
-  }
-
   let command;
   try {
     command = resolveClaudeCli({ env, homeDir, existsSync });
