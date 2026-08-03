@@ -16,20 +16,20 @@ Use this skill when the user wants work delegated to Claude Code instead of stay
 
 ## Model routing
 
-- `fable`: use Claude Fable 5 for complex, long-running work that benefits from sustained autonomous investigation and verification.
+- `fable`: use Claude Fable for complex, long-running work that benefits from sustained autonomous investigation and verification.
 - `sonnet`: default for normal implementation, review, and debugging work.
 - `opus`: use for harder architectural reasoning, deeper debugging, or pressure-testing a design.
 - `haiku`: use for quick lightweight passes, short summaries, and cheap sanity checks.
 
 ## Fable requirements
 
-- Claude Fable 5 requires Claude Code 2.1.170 or later. Check the version returned by `setup`; if it is older, tell the user to run `claude update` before using Fable.
+- Claude Fable requires Claude Code 2.1.170 or later. If a Fable run fails, use `setup` to check the installed version; if it is older, tell the user to run `claude update`.
 - Fable requires 30-day data retention and is unavailable under zero data retention.
 - Cybersecurity and biology requests can trigger automatic safety fallback to Opus 4.8. Treat that fallback as expected Claude Code behavior.
 
 ## Runtime
 
-For Sonnet, Opus, and Haiku, run Claude Code directly without a setup preflight.
+Run Claude Code directly without a setup preflight.
 
 ```bash
 node <path-to-skill>/scripts/claude-code-bridge.mjs run \
@@ -39,13 +39,11 @@ node <path-to-skill>/scripts/claude-code-bridge.mjs run \
   --json
 ```
 
-Run `setup` before Fable to verify its minimum CLI version, or after a failed run to diagnose CLI installation or authentication.
+Run `setup` only after a failed run to diagnose the Claude CLI version, installation, or authentication.
 
 ```bash
 node <path-to-skill>/scripts/claude-code-bridge.mjs setup --json
 ```
-
-Use `--model fable` when the user requests Claude Fable 5.
 
 ## Prompting rules
 

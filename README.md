@@ -13,7 +13,7 @@ The plugin is implemented as a Codex skill plus a small runner script. That keep
 - Node.js >= 22
 - Codex CLI, the ChatGPT desktop app, or the Codex IDE extension with plugin support
 - [Claude Code CLI](https://code.claude.com/docs/en/overview) installed and authenticated
-- Claude Code >= 2.1.170 to use Claude Fable 5
+- Claude Code >= 2.1.170 to use Claude Fable
 
 ## Install
 
@@ -110,7 +110,7 @@ OpenAI references:
 - A skill that teaches Codex when and how to call Claude Code
 - A helper script that handles `claude` availability, auth checks, model selection, and JSON output parsing
 
-## Claude Fable 5
+## Claude Fable
 
 Select Fable explicitly with `--model fable` for complex, long-running work. The bridge also accepts Fable's `xhigh` effort level:
 
