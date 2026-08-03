@@ -61,3 +61,13 @@ test("packaged skill documents Claude Fable operating constraints", async () => 
   assert.match(skill, /30-day data retention/);
   assert.match(skill, /fallback to Opus 4\.8/);
 });
+
+test("packaged skill avoids unnecessary Claude setup checks", async () => {
+  const skillPath = path.join(repoRoot, "plugins/claude-code/skills/claude-code-bridge/SKILL.md");
+  const skill = await fs.readFile(skillPath, "utf8");
+
+  assert.match(skill, /For Sonnet, Opus, and Haiku, run Claude Code directly without a setup preflight\./);
+  assert.match(skill, /Run `setup` before Fable .* or after a failed run/);
+  assert.match(skill, /Use `--prompt` for short prompts/);
+  assert.match(skill, /remaining bridge commands in the current turn/);
+});
