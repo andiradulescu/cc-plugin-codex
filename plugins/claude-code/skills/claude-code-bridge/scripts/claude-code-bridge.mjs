@@ -6,6 +6,7 @@ import process from "node:process";
 
 import {
   buildClaudeArgs,
+  buildHostExecutionRequirement,
   buildSetupReport,
   parseClaudeJson,
   renderRunText,
@@ -66,7 +67,22 @@ function output(payload, asJson) {
   process.stdout.write(payload);
 }
 
+function exitIfHostExecutionRequired(options, payload) {
+  const requirement = buildHostExecutionRequirement();
+  if (!requirement.requiresHostExecution) {
+    return;
+  }
+
+  if (options.json) {
+    output({ ...payload, ...requirement }, true);
+  } else {
+    output(`${requirement.error.message}\n`, false);
+  }
+  process.exit(1);
+}
+
 function handleSetup(options) {
+  exitIfHostExecutionRequired(options, { ready: false });
   const report = buildSetupReport();
   if (options.json) {
     output(report, true);
@@ -97,6 +113,8 @@ function handleSetup(options) {
 }
 
 function handleRun(options) {
+  exitIfHostExecutionRequired(options, { ok: false });
+
   const stdin = readStdinIfPiped();
   const cwd = options.cwd ? path.resolve(options.cwd) : process.cwd();
   const command = resolveClaudeCli();

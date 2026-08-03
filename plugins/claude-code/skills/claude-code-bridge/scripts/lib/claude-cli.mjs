@@ -15,6 +15,23 @@ function trimToNull(value) {
   return normalized ? normalized : null;
 }
 
+export function buildHostExecutionRequirement({ env = process.env } = {}) {
+  if (!trimToNull(env.CODEX_SANDBOX)) {
+    return {
+      requiresHostExecution: false
+    };
+  }
+
+  return {
+    requiresHostExecution: true,
+    error: {
+      code: "host_execution_required",
+      message:
+        "Claude Code must run outside the Codex sandbox to access host authentication and network. Rerun this command with scoped sandbox escalation."
+    }
+  };
+}
+
 export function resolveClaudeCli({ env = process.env, homeDir = os.homedir(), existsSync = fs.existsSync } = {}) {
   const explicit = trimToNull(env.CLAUDE_CODE_CLI);
   if (explicit) {

@@ -3,11 +3,28 @@ import assert from "node:assert/strict";
 
 import {
   buildClaudeArgs,
+  buildHostExecutionRequirement,
   buildSetupReport,
   parseClaudeJson,
   renderRunText,
   resolveClaudeCli
 } from "../plugins/claude-code/skills/claude-code-bridge/scripts/lib/claude-cli.mjs";
+
+test("buildHostExecutionRequirement identifies the Codex sandbox", () => {
+  assert.deepEqual(buildHostExecutionRequirement({ env: {} }), {
+    requiresHostExecution: false
+  });
+
+  const requirement = buildHostExecutionRequirement({
+    env: {
+      CODEX_SANDBOX: "seatbelt"
+    }
+  });
+
+  assert.equal(requirement.requiresHostExecution, true);
+  assert.equal(requirement.error.code, "host_execution_required");
+  assert.match(requirement.error.message, /scoped sandbox escalation/);
+});
 
 test("resolveClaudeCli prefers an explicit bare executable name", () => {
   const command = resolveClaudeCli({

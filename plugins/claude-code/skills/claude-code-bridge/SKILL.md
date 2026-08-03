@@ -29,7 +29,7 @@ Use this skill when the user wants work delegated to Claude Code instead of stay
 
 ## Runtime
 
-Use the plugin-local helper:
+Use the plugin-local helper for setup. When it reports a host execution requirement, follow the failure handling below.
 
 ```bash
 node <path-to-skill>/scripts/claude-code-bridge.mjs setup --json
@@ -68,8 +68,10 @@ node <path-to-skill>/scripts/claude-code-bridge.mjs run \
 
 ## Failure handling
 
+- If a command returns `requiresHostExecution: true` with error code `host_execution_required`, rerun that exact command with scoped sandbox escalation.
+- If scoped host execution is unavailable or denied, explain that the local Claude Code bridge cannot access host authentication from the current sandbox.
 - If `setup` reports Claude Code missing, tell the user to install `@anthropic-ai/claude-code`.
-- If `setup` reports unauthenticated, tell the user to run `claude auth login`.
+- If `setup` reports unauthenticated after it ran outside the Codex sandbox, tell the user to run `claude auth login`.
 - If the command fails because bypass permissions were never accepted, ask the user to run:
   - `claude --permission-mode bypassPermissions`
 

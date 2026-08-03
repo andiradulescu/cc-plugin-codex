@@ -11,3 +11,11 @@ It intentionally uses the CLI, not a remote connector:
 Claude Fable 5 requires Claude Code 2.1.170 or later and 30-day data retention. Select it explicitly with `--model fable`.
 
 The main entrypoint is the skill at [`skills/claude-code-bridge/SKILL.md`](./skills/claude-code-bridge/SKILL.md).
+
+## Sandbox boundary
+
+Claude Code stores host authentication in platform credential storage, including the macOS Keychain, which the outer Codex sandbox cannot access.
+
+When the bridge detects `CODEX_SANDBOX`, it returns `requiresHostExecution: true` with error code `host_execution_required` instead of misreporting the host as logged out. Rerun that exact bridge command with scoped sandbox escalation. Do not enable full access or copy Claude credentials into the sandbox.
+
+The bridge still enables Claude Code's own sandbox and prevents Claude from disabling it for delegated commands.
