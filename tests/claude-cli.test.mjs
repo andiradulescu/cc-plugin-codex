@@ -7,7 +7,8 @@ import {
   buildSetupReport,
   parseClaudeJson,
   renderRunText,
-  resolveClaudeCli
+  resolveClaudeCli,
+  runChecked
 } from "../plugins/claude-code/skills/claude-code-bridge/scripts/lib/claude-cli.mjs";
 
 test("buildHostExecutionRequirement identifies the Codex sandbox", () => {
@@ -119,4 +120,13 @@ test("buildSetupReport marks invalid explicit config as not ready", () => {
   assert.equal(report.ready, false);
   assert.equal(report.cli.available, false);
   assert.match(report.cli.error, /absolute path or a bare executable name/);
+});
+
+test("runChecked captures output larger than the default spawnSync buffer", () => {
+  const size = 2 * 1024 * 1024;
+  const result = runChecked(process.execPath, ["-e", `process.stdout.write("x".repeat(${size}))`]);
+
+  assert.equal(result.error, null);
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout.length, size);
 });

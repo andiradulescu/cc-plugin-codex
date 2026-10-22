@@ -167,7 +167,9 @@ export function runChecked(command, args, { cwd, env = process.env } = {}) {
   const result = spawnSync(command, args, {
     cwd,
     env,
-    encoding: "utf8"
+    encoding: "utf8",
+    // spawnSync defaults to a 1 MiB buffer; long Claude runs can exceed it.
+    maxBuffer: Infinity
   });
 
   return {
