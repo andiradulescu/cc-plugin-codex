@@ -6,14 +6,14 @@ The plugin is implemented as a Codex skill plus a small runner script. That keep
 
 - Codex decides when a Claude pass is useful.
 - The skill invokes `claude -p` with JSON output.
-- Model selection is explicit: `fable`, `opus`, `sonnet`, or `haiku`.
+- Model selection is explicit: `fable`, `opus`, `sonnet`, `haiku`, or a full model ID such as `claude-fable-5-1`.
 
 ## Prerequisites
 
 - Node.js >= 22
 - Codex CLI, the ChatGPT desktop app, or the Codex IDE extension with plugin support
 - [Claude Code CLI](https://code.claude.com/docs/en/overview) installed and authenticated
-- Claude Code >= 2.1.170 to use Claude Fable
+- Claude Code >= 2.1.257 to use Claude Fable 5.1 (>= 2.1.170 for Fable 5)
 
 ## Install
 
@@ -112,24 +112,26 @@ OpenAI references:
 
 ## Claude Fable
 
-Select Fable explicitly with `--model fable` for complex, long-running work. The bridge also accepts Fable's `xhigh` effort level:
+Select Fable 5.1 explicitly with `--model claude-fable-5-1` for complex, long-running work. The bridge also accepts Fable's `xhigh` effort level:
 
 ```bash
 node plugins/claude-code/skills/claude-code-bridge/scripts/claude-code-bridge.mjs run \
-  --model fable \
+  --model claude-fable-5-1 \
   --effort xhigh \
   --prompt "Investigate and fix this complex failure" \
   --json
 ```
 
-Fable requires 30-day data retention and is unavailable under zero data retention. Its safety classifiers can automatically fall back to Opus 4.8 for cybersecurity and biology requests.
+On Claude Code 2.1.257 or later, `--model fable` normally selects Fable 5.1. `ANTHROPIC_DEFAULT_FABLE_MODEL` can override that alias, and Claude apps gateway sessions resolve it to Fable 5. Use the full model ID when you need a specific version. On the Anthropic API, Fable 5 remains selectable with `--model claude-fable-5`.
+
+Fable models require data retention by default; availability under zero data retention depends on your organization's [Covered Models policies](https://code.claude.com/docs/en/zero-data-retention#model-availability-under-zdr). Cybersecurity and biology requests can trigger [automatic safety fallback](https://code.claude.com/docs/en/model-config#automatic-model-fallback) to an Opus model.
 
 ## Claude Code integration surface
 
-The runner uses the current Claude Code CLI flow documented on July 12, 2026:
+The runner uses the documented Claude Code CLI flow:
 
 - `claude -p`
-- `--model fable`
+- `--model fable` / `--model claude-fable-5-1`
 - `--effort xhigh`
 - `--output-format json`
 - `--continue` / `--resume`

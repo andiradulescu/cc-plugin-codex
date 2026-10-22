@@ -23,9 +23,10 @@ Use this skill when the user wants work delegated to Claude Code instead of stay
 
 ## Fable requirements
 
-- Claude Fable requires Claude Code 2.1.170 or later. If a Fable run fails, use `setup` to check the installed version; if it is older, tell the user to run `claude update`.
-- Fable requires 30-day data retention and is unavailable under zero data retention.
-- Cybersecurity and biology requests can trigger automatic safety fallback to Opus 4.8. Treat that fallback as expected Claude Code behavior.
+- Claude Fable 5.1 requires Claude Code 2.1.257 or later; Fable 5 requires 2.1.170 or later. If a Fable run fails, use `setup` to check the installed version; if it is below the requested model's requirement, tell the user to run `claude update`.
+- When the user requests Fable 5.1, use `--model claude-fable-5-1`. On Claude Code 2.1.257 or later, `fable` normally selects 5.1, but `ANTHROPIC_DEFAULT_FABLE_MODEL` can override it and Claude apps gateway sessions resolve it to Fable 5. On the Anthropic API, use `--model claude-fable-5` when the user requests Fable 5.
+- Fable models require data retention by default. Check [model availability under ZDR](https://code.claude.com/docs/en/zero-data-retention#model-availability-under-zdr) for your organization's Covered Models policies.
+- Cybersecurity and biology requests can trigger [automatic safety fallback](https://code.claude.com/docs/en/model-config#automatic-model-fallback) to an Opus model. Treat that fallback as expected Claude Code behavior.
 
 ## Runtime
 
@@ -77,7 +78,7 @@ node <path-to-skill>/scripts/claude-code-bridge.mjs setup --json
 
 ## Examples
 
-- "Use Claude Fable to investigate and fix this complex cross-service failure."
+- "Use Claude Fable 5.1 to investigate and fix this complex cross-service failure."
 - "Use Claude Code Opus to challenge this database migration plan."
 - "Ask Claude Code Sonnet to review the current diff for regressions."
 - "Use Claude Code Haiku to summarize the likely cause of this test failure."

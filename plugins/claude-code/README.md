@@ -8,9 +8,9 @@ It intentionally uses the CLI, not a remote connector:
 - direct access to `fable`, `opus`, `sonnet`, and `haiku`
 - predictable behavior from the current Claude Code docs
 
-Claude Fable requires Claude Code 2.1.170 or later and 30-day data retention. Select it explicitly with `--model fable`.
+Claude Fable 5.1 requires Claude Code 2.1.257 or later. Select it explicitly with `--model claude-fable-5-1`. Fable 5 requires Claude Code 2.1.170 or later.
 
-The main entrypoint is the skill at [`skills/claude-code-bridge/SKILL.md`](./skills/claude-code-bridge/SKILL.md).
+The main entrypoint is the skill at [`skills/claude-code-bridge/SKILL.md`](./skills/claude-code-bridge/SKILL.md), which also documents Fable alias resolution, data retention, and safety fallback.
 
 ## Sandbox boundary
 

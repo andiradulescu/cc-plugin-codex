@@ -56,9 +56,9 @@ test("packaged skill documents Claude Fable operating constraints", async () => 
   const skillPath = path.join(repoRoot, "plugins/claude-code/skills/claude-code-bridge/SKILL.md");
   const skill = await fs.readFile(skillPath, "utf8");
 
-  assert.match(skill, /2\.1\.170/);
-  assert.match(skill, /30-day data retention/);
-  assert.match(skill, /fallback to Opus 4\.8/);
+  assert.match(skill, /2\.1\.257/);
+  assert.match(skill, /data retention by default/);
+  assert.match(skill, /automatic safety fallback/);
 });
 
 test("packaged skill avoids unnecessary Claude setup checks", async () => {
@@ -77,5 +77,5 @@ test("packaged documentation uses the concise Fable name", async () => {
   const pluginReadme = await fs.readFile(path.join(repoRoot, "plugins/claude-code/README.md"), "utf8");
 
   assert.match(rootReadme, /^## Claude Fable$/m);
-  assert.match(pluginReadme, /Claude Fable requires Claude Code/);
+  assert.match(pluginReadme, /Claude Fable 5\.1 requires Claude Code/);
 });
