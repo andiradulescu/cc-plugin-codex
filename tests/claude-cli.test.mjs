@@ -60,7 +60,8 @@ test("buildClaudeArgs adds the documented Claude Code flags", () => {
     resume: "session-123"
   });
 
-  assert.deepEqual(args.slice(0, 6), ["--print", "Review this patch", "--output-format", "json", "--permission-mode", "acceptEdits"]);
+  assert.deepEqual(args.slice(0, 5), ["--print", "--output-format", "json", "--permission-mode", "acceptEdits"]);
+  assert.equal(args.includes("Review this patch"), false, "prompt is passed on stdin, not argv");
   assert.match(args.join(" "), /acceptEdits/);
   assert.match(args.join(" "), /--model opus/);
   assert.match(args.join(" "), /--effort high/);
@@ -200,4 +201,11 @@ test("buildClaudeError falls back to the result text and exit status", () => {
     code: "claude_error",
     message: "Claude Code exited with status 2."
   });
+});
+
+test("runChecked writes input to the command stdin", () => {
+  const result = runChecked(process.execPath, ["-e", "process.stdin.pipe(process.stdout)"], { input: "from stdin" });
+
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout, "from stdin");
 });

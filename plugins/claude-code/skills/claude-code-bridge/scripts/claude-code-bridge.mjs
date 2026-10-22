@@ -11,6 +11,7 @@ import {
   buildSetupReport,
   normalizeTimeoutSeconds,
   parseClaudeJson,
+  readPrompt,
   renderRunText,
   resolveClaudeCli,
   runChecked
@@ -121,9 +122,12 @@ function handleRun(options) {
   const cwd = options.cwd ? path.resolve(options.cwd) : process.cwd();
   const timeoutSeconds = normalizeTimeoutSeconds(options.timeout);
   const command = resolveClaudeCli();
-  const args = buildClaudeArgs({
+  const prompt = readPrompt({
     prompt: options.prompt,
     promptFile: options["prompt-file"],
+    stdin
+  });
+  const args = buildClaudeArgs({
     model: options.model,
     effort: options.effort,
     continueLast: Boolean(options.continue),
@@ -131,12 +135,12 @@ function handleRun(options) {
     permissionMode: options["permission-mode"],
     appendSystemPromptFile: options["append-system-prompt-file"],
     systemPromptFile: options["system-prompt-file"],
-    jsonSchemaFile: options["json-schema-file"],
-    stdin
+    jsonSchemaFile: options["json-schema-file"]
   });
 
   const result = runChecked(command, args, {
     cwd,
+    input: prompt,
     timeoutMs: timeoutSeconds == null ? undefined : timeoutSeconds * 1000
   });
   if (result.timedOut) {

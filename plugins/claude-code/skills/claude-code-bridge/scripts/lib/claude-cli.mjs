@@ -102,11 +102,11 @@ export const SANDBOX_SETTINGS = JSON.stringify({
   }
 });
 
+// The prompt is sent on stdin (see runChecked `input`) so its size is not bound by the OS argv limit.
 export function buildClaudeArgs(options) {
-  const prompt = readPrompt(options);
   const permissionMode = trimToNull(options.permissionMode) ?? "acceptEdits";
   const args = [
-    "--print", prompt,
+    "--print",
     "--output-format", "json",
     "--permission-mode", permissionMode,
     "--settings", SANDBOX_SETTINGS
@@ -185,10 +185,11 @@ export function renderRunText(parsed, model) {
   return `${lines.join("\n")}\n`;
 }
 
-export function runChecked(command, args, { cwd, env = process.env, timeoutMs } = {}) {
+export function runChecked(command, args, { cwd, env = process.env, timeoutMs, input } = {}) {
   const result = spawnSync(command, args, {
     cwd,
     env,
+    input,
     encoding: "utf8",
     // spawnSync defaults to a 1 MiB buffer; long Claude runs can exceed it.
     maxBuffer: Infinity,

@@ -59,7 +59,8 @@ function runBridge(args, cli) {
   return spawnSync(process.execPath, [bridge, ...args], {
     cwd: repoRoot,
     env: hostEnv,
-    encoding: "utf8"
+    encoding: "utf8",
+    maxBuffer: Infinity
   });
 }
 
@@ -149,4 +150,33 @@ test("bridge reports invalid JSON from a successful Claude run", () => {
 
   assert.equal(result.status, 1);
   assert.match(result.stderr, /returned invalid JSON/);
+});
+
+const echoPromptSource = `
+const stdin = require("node:fs").readFileSync(0, "utf8");
+process.stdout.write(JSON.stringify({ is_error: false, result: stdin, session_id: "echo", argv: process.argv.slice(2) }));
+`;
+
+test("bridge sends the prompt to Claude on stdin", () => {
+  const cli = createFakeClaude(echoPromptSource);
+  const result = runBridge(["run", "--prompt", "Review this patch", "--json"], cli);
+
+  assert.equal(result.status, 0, result.stderr);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.result, "Review this patch");
+  assert.equal(payload.raw.argv.includes("Review this patch"), false);
+  assert.equal(payload.raw.argv[0], "--print");
+});
+
+test("bridge sends a large prompt file to Claude on stdin", () => {
+  const cli = createFakeClaude(echoPromptSource);
+  const promptFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "bridge-prompt-")), "prompt.txt");
+  // Larger than the macOS 1 MiB ARG_MAX limit on argv.
+  const prompt = "x".repeat(2 * 1024 * 1024);
+  fs.writeFileSync(promptFile, prompt);
+
+  const result = runBridge(["run", "--prompt-file", promptFile, "--json"], cli);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).result.length, prompt.length);
 });
