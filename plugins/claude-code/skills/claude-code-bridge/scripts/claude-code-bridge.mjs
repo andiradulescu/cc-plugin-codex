@@ -148,7 +148,10 @@ function handleRun(options) {
     throw new Error(`Claude Code timed out after ${timeoutSeconds}s.`);
   }
   if (result.error) {
-    throw result.error;
+    const hasClaudeErrorOutput = result.status !== 0 && (result.stdout.trim() || result.stderr.trim());
+    if (result.error.code !== "EPIPE" || !hasClaudeErrorOutput) {
+      throw result.error;
+    }
   }
 
   let parsed;

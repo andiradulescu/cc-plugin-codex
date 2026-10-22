@@ -174,6 +174,65 @@ test("bridge reports non-JSON Claude failures on stderr", () => {
   assert.match(result.stderr, /boom/);
 });
 
+test("bridge preserves early Claude diagnostics with a large prompt file", (context) => {
+  const cli = createFakeClaude(`
+const fs = require("node:fs");
+fs.writeSync(2, "invalid permission mode");
+fs.closeSync(0);
+process.exit(3);
+`);
+  context.after(() => fs.rmSync(path.dirname(cli), { recursive: true, force: true }));
+  const promptFile = path.join(path.dirname(cli), "prompt.txt");
+  fs.writeFileSync(promptFile, "x".repeat(2 * 1024 * 1024));
+  const result = runBridge(["run", "--prompt-file", promptFile, "--json"], cli);
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /exited with status [1-9]/);
+  assert.match(result.stderr, /invalid permission mode/);
+  assert.doesNotMatch(result.stderr, /EPIPE/);
+});
+
+test("bridge preserves early JSON errors with a large prompt file", (context) => {
+  const cli = createFakeClaude(`
+const fs = require("node:fs");
+fs.writeSync(1, ${JSON.stringify(maxTurnsOutput)});
+fs.closeSync(0);
+process.exit(1);
+`);
+  context.after(() => fs.rmSync(path.dirname(cli), { recursive: true, force: true }));
+  const promptFile = path.join(path.dirname(cli), "prompt.txt");
+  fs.writeFileSync(promptFile, "x".repeat(2 * 1024 * 1024));
+  const result = runBridge(["run", "--prompt-file", promptFile, "--json"], cli);
+
+  assert.equal(result.status, 1);
+  assert.equal(result.stderr, "");
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.sessionId, "43f7a822");
+  assert.equal(payload.error.code, "error_max_turns");
+  assert.equal(payload.error.message, "Reached maximum number of turns (1)");
+});
+
+test("bridge reports a broken pipe when Claude returns no diagnostic", (context) => {
+  const cli = createFakeClaude(`require("node:fs").closeSync(0); process.exit(1);`);
+  context.after(() => fs.rmSync(path.dirname(cli), { recursive: true, force: true }));
+  const promptFile = path.join(path.dirname(cli), "prompt.txt");
+  fs.writeFileSync(promptFile, "x".repeat(2 * 1024 * 1024));
+  const result = runBridge(["run", "--prompt-file", promptFile, "--json"], cli);
+
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, "");
+  assert.match(result.stderr, /EPIPE/);
+});
+
+test("bridge preserves errors when Claude cannot start", () => {
+  const result = runBridge(["run", "--prompt", "hello", "--json"], "/path/that/does/not/exist");
+
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, "");
+  assert.match(result.stderr, /ENOENT/);
+});
+
 test("bridge returns a successful Claude result", () => {
   const output = JSON.stringify({ type: "result", subtype: "success", is_error: false, result: "Done", session_id: "s1" });
   const cli = createFakeClaude(`process.stdout.write(${JSON.stringify(output)});`);
