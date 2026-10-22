@@ -110,7 +110,6 @@ function handleSetup(options) {
     if (report.cli.available && !report.auth.authenticated) {
       lines.push("- Run `claude auth login`.");
     }
-    lines.push("- Accept non-interactive permissions once with `claude --permission-mode bypassPermissions`.");
   }
   output(`${lines.join("\n")}\n`, false);
   process.exit(report.ready ? 0 : 1);

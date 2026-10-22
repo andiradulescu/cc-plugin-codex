@@ -193,3 +193,12 @@ test("bridge reports the model Claude actually ran with", () => {
     assert.equal(payload.raw.argv[payload.raw.argv.indexOf("--model") + 1], expected);
   }
 });
+
+test("bridge setup only suggests steps that apply to the failure", () => {
+  const result = runBridge(["setup"], "/path/that/does/not/exist");
+
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /Claude CLI available: no/);
+  assert.match(result.stdout, /Install Claude Code/);
+  assert.doesNotMatch(result.stdout, /bypassPermissions/);
+});
