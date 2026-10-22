@@ -82,6 +82,24 @@ test("bridge rejects an invalid --timeout", () => {
   assert.match(result.stderr, /positive number of seconds/);
 });
 
+test("bridge accepts fractional-second timeouts", (context) => {
+  const cli = createFakeClaude(`process.stdout.write(JSON.stringify({ result: "Done" }));`);
+  context.after(() => fs.rmSync(path.dirname(cli), { recursive: true, force: true }));
+  const result = runBridge(["run", "--prompt", "hello", "--timeout", "1.001", "--json"], cli);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).result, "Done");
+});
+
+test("bridge keeps sub-millisecond timeouts positive", (context) => {
+  const cli = createFakeClaude("setTimeout(() => {}, 10000);");
+  context.after(() => fs.rmSync(path.dirname(cli), { recursive: true, force: true }));
+  const result = runBridge(["run", "--prompt", "hello", "--timeout", "0.0001"], cli);
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /timed out after 0\.0001s/);
+});
+
 const maxTurnsOutput = JSON.stringify({
   type: "result",
   subtype: "error_max_turns",
@@ -104,6 +122,30 @@ test("bridge returns Claude errors as JSON with the session id", () => {
     code: "error_max_turns",
     message: "Reached maximum number of turns (1)"
   });
+});
+
+test("bridge returns complete large JSON errors through a pipe", (context) => {
+  const cli = createFakeClaude(`
+require("node:fs").readFileSync(0, "utf8");
+process.stdout.write(JSON.stringify({
+  is_error: true,
+  subtype: "error_during_execution",
+  session_id: "large-error-session",
+  errors: ["x".repeat(256 * 1024)]
+}));
+process.exitCode = 1;
+`);
+  context.after(() => fs.rmSync(path.dirname(cli), { recursive: true, force: true }));
+  const result = runBridge(["run", "--prompt", "hello", "--json"], cli);
+
+  assert.equal(result.status, 1);
+  assert.equal(result.stderr, "");
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.sessionId, "large-error-session");
+  assert.equal(payload.error.code, "error_during_execution");
+  assert.equal(payload.error.message, "x".repeat(256 * 1024));
+  assert.deepEqual(payload.raw.errors, [payload.error.message]);
 });
 
 test("bridge reports Claude errors with the session id in text mode", () => {

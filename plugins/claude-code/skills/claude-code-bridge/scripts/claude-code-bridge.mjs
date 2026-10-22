@@ -142,7 +142,7 @@ function handleRun(options) {
   const result = runChecked(command, args, {
     cwd,
     input: prompt,
-    timeoutMs: timeoutSeconds == null ? undefined : timeoutSeconds * 1000
+    timeoutMs: timeoutSeconds == null ? undefined : Math.max(1, Math.round(timeoutSeconds * 1000))
   });
   if (result.timedOut) {
     throw new Error(`Claude Code timed out after ${timeoutSeconds}s.`);
@@ -173,7 +173,8 @@ function handleRun(options) {
     const error = buildClaudeError(parsed, result.status);
     if (options.json) {
       output({ ok: false, model, cwd, sessionId: parsed.sessionId, error, raw: parsed.raw }, true);
-      process.exit(1);
+      process.exitCode = 1;
+      return;
     }
     const details = parsed.sessionId ? `${error.message}\nSession ID: ${parsed.sessionId}` : error.message;
     throw new Error(details);
