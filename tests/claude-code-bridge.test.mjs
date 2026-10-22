@@ -202,3 +202,40 @@ test("bridge setup only suggests steps that apply to the failure", () => {
   assert.match(result.stdout, /Install Claude Code/);
   assert.doesNotMatch(result.stdout, /bypassPermissions/);
 });
+
+test("bridge help lists every run flag", () => {
+  const result = spawnSync(process.execPath, [bridge, "--help"], { encoding: "utf8" });
+
+  assert.equal(result.status, 0);
+  for (const flag of ["--timeout", "--append-system-prompt-file", "--system-prompt-file", "--json-schema-file"]) {
+    assert.match(result.stdout, new RegExp(`${flag} <`), flag);
+  }
+});
+
+test("bridge forwards system prompt and JSON schema files to Claude", () => {
+  const cli = createFakeClaude(echoPromptSource);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bridge-files-"));
+  const appendFile = path.join(dir, "append.md");
+  const systemFile = path.join(dir, "system.md");
+  const schemaFile = path.join(dir, "schema.json");
+  const schema = JSON.stringify({ type: "object", properties: { ok: { type: "boolean" } } });
+  fs.writeFileSync(appendFile, "extra");
+  fs.writeFileSync(systemFile, "system");
+  fs.writeFileSync(schemaFile, schema);
+
+  const result = runBridge(
+    [
+      "run", "--prompt", "hello", "--json",
+      "--append-system-prompt-file", appendFile,
+      "--system-prompt-file", systemFile,
+      "--json-schema-file", schemaFile
+    ],
+    cli
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+  const { argv } = JSON.parse(result.stdout).raw;
+  assert.equal(argv[argv.indexOf("--append-system-prompt-file") + 1], appendFile);
+  assert.equal(argv[argv.indexOf("--system-prompt-file") + 1], systemFile);
+  assert.equal(argv[argv.indexOf("--json-schema") + 1], schema);
+});

@@ -23,7 +23,8 @@ function printUsage() {
     [
       "Usage:",
       "  node claude-code-bridge.mjs setup [--json]",
-      "  node claude-code-bridge.mjs run [--model <model>] [--effort <level>] [--cwd <path>] [--prompt <text>|--prompt-file <path>] [--permission-mode <mode>] [--continue] [--resume <session-id>] [--timeout <seconds>] [--json]"
+      "  node claude-code-bridge.mjs run [--model <model>] [--effort <level>] [--cwd <path>] [--prompt <text>|--prompt-file <path>] [--permission-mode <mode>] [--continue] [--resume <session-id>] [--timeout <seconds>] [--json]",
+      "      [--append-system-prompt-file <path>] [--system-prompt-file <path>] [--json-schema-file <path>]"
     ].join("\n") + "\n"
   );
 }

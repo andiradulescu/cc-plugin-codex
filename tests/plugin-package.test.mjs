@@ -79,3 +79,12 @@ test("packaged documentation uses the concise Fable name", async () => {
   assert.match(rootReadme, /^## Claude Fable$/m);
   assert.match(pluginReadme, /Claude Fable 5\.1 requires Claude Code/);
 });
+
+test("packaged skill documents every run flag", async () => {
+  const skillPath = path.join(repoRoot, "plugins/claude-code/skills/claude-code-bridge/SKILL.md");
+  const skill = await fs.readFile(skillPath, "utf8");
+
+  for (const flag of ["--timeout", "--append-system-prompt-file", "--system-prompt-file", "--json-schema-file"]) {
+    assert.match(skill, new RegExp(`\`${flag} `), flag);
+  }
+});
