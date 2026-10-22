@@ -46,8 +46,16 @@ test("bridge requires host execution for sandboxed setup and run", () => {
   assert.match(result.stdout, /must run outside the Codex sandbox/);
 });
 
+// All fake CLIs and fixture files live under one root that is removed after the file's tests.
+const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "claude-bridge-test-"));
+test.after(() => fs.rmSync(tempRoot, { recursive: true, force: true }));
+
+function createTempDir() {
+  return fs.mkdtempSync(path.join(tempRoot, "case-"));
+}
+
 function createFakeClaude(source) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "fake-claude-"));
+  const dir = createTempDir();
   const cli = path.join(dir, "claude");
   fs.writeFileSync(cli, `#!/usr/bin/env node\n${source}\n`, { mode: 0o755 });
   return cli;
@@ -82,18 +90,16 @@ test("bridge rejects an invalid --timeout", () => {
   assert.match(result.stderr, /positive number of seconds/);
 });
 
-test("bridge accepts fractional-second timeouts", (context) => {
+test("bridge accepts fractional-second timeouts", () => {
   const cli = createFakeClaude(`process.stdout.write(JSON.stringify({ result: "Done" }));`);
-  context.after(() => fs.rmSync(path.dirname(cli), { recursive: true, force: true }));
   const result = runBridge(["run", "--prompt", "hello", "--timeout", "1.001", "--json"], cli);
 
   assert.equal(result.status, 0, result.stderr);
   assert.equal(JSON.parse(result.stdout).result, "Done");
 });
 
-test("bridge keeps sub-millisecond timeouts positive", (context) => {
+test("bridge keeps sub-millisecond timeouts positive", () => {
   const cli = createFakeClaude("setTimeout(() => {}, 10000);");
-  context.after(() => fs.rmSync(path.dirname(cli), { recursive: true, force: true }));
   const result = runBridge(["run", "--prompt", "hello", "--timeout", "0.0001"], cli);
 
   assert.equal(result.status, 1);
@@ -124,7 +130,7 @@ test("bridge returns Claude errors as JSON with the session id", () => {
   });
 });
 
-test("bridge returns complete large JSON errors through a pipe", (context) => {
+test("bridge returns complete large JSON errors through a pipe", () => {
   const cli = createFakeClaude(`
 require("node:fs").readFileSync(0, "utf8");
 process.stdout.write(JSON.stringify({
@@ -135,7 +141,6 @@ process.stdout.write(JSON.stringify({
 }));
 process.exitCode = 1;
 `);
-  context.after(() => fs.rmSync(path.dirname(cli), { recursive: true, force: true }));
   const result = runBridge(["run", "--prompt", "hello", "--json"], cli);
 
   assert.equal(result.status, 1);
@@ -148,14 +153,13 @@ process.exitCode = 1;
   assert.deepEqual(payload.raw.errors, [payload.error.message]);
 });
 
-test("bridge returns complete large errors on stderr in text mode", (context) => {
+test("bridge returns complete large errors on stderr in text mode", () => {
   const message = "x".repeat(256 * 1024);
   const cli = createFakeClaude(`
 require("node:fs").readFileSync(0, "utf8");
 process.stdout.write(JSON.stringify({ is_error: true, session_id: "large-text-error", errors: [${JSON.stringify(message)}] }));
 process.exitCode = 1;
 `);
-  context.after(() => fs.rmSync(path.dirname(cli), { recursive: true, force: true }));
   const result = runBridge(["run", "--prompt", "hello"], cli);
 
   assert.equal(result.status, 1);
@@ -188,14 +192,13 @@ test("bridge reports non-JSON Claude failures on stderr", () => {
   assert.match(result.stderr, /boom/);
 });
 
-test("bridge preserves early Claude diagnostics with a large prompt file", (context) => {
+test("bridge preserves early Claude diagnostics with a large prompt file", () => {
   const cli = createFakeClaude(`
 const fs = require("node:fs");
 fs.writeSync(2, "invalid permission mode");
 fs.closeSync(0);
 process.exit(3);
 `);
-  context.after(() => fs.rmSync(path.dirname(cli), { recursive: true, force: true }));
   const promptFile = path.join(path.dirname(cli), "prompt.txt");
   fs.writeFileSync(promptFile, "x".repeat(2 * 1024 * 1024));
   const result = runBridge(["run", "--prompt-file", promptFile, "--json"], cli);
@@ -206,14 +209,13 @@ process.exit(3);
   assert.doesNotMatch(result.stderr, /EPIPE/);
 });
 
-test("bridge preserves early JSON errors with a large prompt file", (context) => {
+test("bridge preserves early JSON errors with a large prompt file", () => {
   const cli = createFakeClaude(`
 const fs = require("node:fs");
 fs.writeSync(1, ${JSON.stringify(maxTurnsOutput)});
 fs.closeSync(0);
 process.exit(1);
 `);
-  context.after(() => fs.rmSync(path.dirname(cli), { recursive: true, force: true }));
   const promptFile = path.join(path.dirname(cli), "prompt.txt");
   fs.writeFileSync(promptFile, "x".repeat(2 * 1024 * 1024));
   const result = runBridge(["run", "--prompt-file", promptFile, "--json"], cli);
@@ -227,9 +229,8 @@ process.exit(1);
   assert.equal(payload.error.message, "Reached maximum number of turns (1)");
 });
 
-test("bridge reports a broken pipe when Claude returns no diagnostic", (context) => {
+test("bridge reports a broken pipe when Claude returns no diagnostic", () => {
   const cli = createFakeClaude(`require("node:fs").closeSync(0); process.exit(1);`);
-  context.after(() => fs.rmSync(path.dirname(cli), { recursive: true, force: true }));
   const promptFile = path.join(path.dirname(cli), "prompt.txt");
   fs.writeFileSync(promptFile, "x".repeat(2 * 1024 * 1024));
   const result = runBridge(["run", "--prompt-file", promptFile, "--json"], cli);
@@ -285,7 +286,7 @@ test("bridge sends the prompt to Claude on stdin", () => {
 
 test("bridge sends a large prompt file to Claude on stdin", () => {
   const cli = createFakeClaude(echoPromptSource);
-  const promptFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "bridge-prompt-")), "prompt.txt");
+  const promptFile = path.join(createTempDir(), "prompt.txt");
   // Larger than the macOS 1 MiB ARG_MAX limit on argv.
   const prompt = "x".repeat(2 * 1024 * 1024);
   fs.writeFileSync(promptFile, prompt);
@@ -329,7 +330,7 @@ test("bridge help lists every run flag", () => {
 
 test("bridge forwards system prompt and JSON schema files to Claude", () => {
   const cli = createFakeClaude(echoPromptSource);
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "bridge-files-"));
+  const dir = createTempDir();
   const appendFile = path.join(dir, "append.md");
   const systemFile = path.join(dir, "system.md");
   const schemaFile = path.join(dir, "schema.json");
@@ -355,7 +356,7 @@ test("bridge forwards system prompt and JSON schema files to Claude", () => {
   assert.equal(argv[argv.indexOf("--json-schema") + 1], schema);
 });
 
-test("bridge setup returns a complete JSON report with large auth output", (context) => {
+test("bridge setup returns a complete JSON report with large auth output", () => {
   const authOutput = "y".repeat(256 * 1024);
   const cli = createFakeClaude(`
 if (process.argv[2] === "--version") {
@@ -365,7 +366,6 @@ if (process.argv[2] === "--version") {
   process.exitCode = 1;
 }
 `);
-  context.after(() => fs.rmSync(path.dirname(cli), { recursive: true, force: true }));
   const result = runBridge(["setup", "--json"], cli);
 
   assert.equal(result.status, 1);
