@@ -148,6 +148,20 @@ process.exitCode = 1;
   assert.deepEqual(payload.raw.errors, [payload.error.message]);
 });
 
+test("bridge returns complete large errors on stderr in text mode", (context) => {
+  const message = "x".repeat(256 * 1024);
+  const cli = createFakeClaude(`
+require("node:fs").readFileSync(0, "utf8");
+process.stdout.write(JSON.stringify({ is_error: true, session_id: "large-text-error", errors: [${JSON.stringify(message)}] }));
+process.exitCode = 1;
+`);
+  context.after(() => fs.rmSync(path.dirname(cli), { recursive: true, force: true }));
+  const result = runBridge(["run", "--prompt", "hello"], cli);
+
+  assert.equal(result.status, 1);
+  assert.equal(result.stderr, `${message}\nSession ID: large-text-error\n`);
+});
+
 test("bridge reports Claude errors with the session id in text mode", () => {
   const cli = createFakeClaude(`process.stdout.write(${JSON.stringify(maxTurnsOutput)}); process.exit(1);`);
   const result = runBridge(["run", "--prompt", "hello"], cli);

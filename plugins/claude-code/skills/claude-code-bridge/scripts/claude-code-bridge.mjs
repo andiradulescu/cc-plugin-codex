@@ -225,5 +225,6 @@ try {
   main();
 } catch (error) {
   process.stderr.write(`${error.message}\n`);
-  process.exit(1);
+  // exitCode lets Node drain stderr; process.exit() can truncate output to a pipe.
+  process.exitCode = 1;
 }
