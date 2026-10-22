@@ -180,3 +180,16 @@ test("bridge sends a large prompt file to Claude on stdin", () => {
   assert.equal(result.status, 0, result.stderr);
   assert.equal(JSON.parse(result.stdout).result.length, prompt.length);
 });
+
+test("bridge reports the model Claude actually ran with", () => {
+  const cli = createFakeClaude(echoPromptSource);
+
+  for (const [args, expected] of [[[], "sonnet"], [["--model", " "], "sonnet"], [["--model", "opus"], "opus"]]) {
+    const result = runBridge(["run", "--prompt", "hello", "--json", ...args], cli);
+    assert.equal(result.status, 0, result.stderr);
+
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.model, expected);
+    assert.equal(payload.raw.argv[payload.raw.argv.indexOf("--model") + 1], expected);
+  }
+});

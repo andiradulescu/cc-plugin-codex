@@ -14,6 +14,7 @@ import {
   readPrompt,
   renderRunText,
   resolveClaudeCli,
+  resolveModel,
   runChecked
 } from "./lib/claude-cli.mjs";
 
@@ -167,7 +168,7 @@ function handleRun(options) {
     throw new Error(message);
   }
 
-  const model = options.model ?? "sonnet";
+  const model = resolveModel(options.model);
   if (result.status !== 0 || parsed.isError) {
     const error = buildClaudeError(parsed, result.status);
     if (options.json) {

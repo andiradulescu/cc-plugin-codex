@@ -10,6 +10,7 @@ import {
   parseClaudeJson,
   renderRunText,
   resolveClaudeCli,
+  resolveModel,
   runChecked
 } from "../plugins/claude-code/skills/claude-code-bridge/scripts/lib/claude-cli.mjs";
 
@@ -208,4 +209,15 @@ test("runChecked writes input to the command stdin", () => {
 
   assert.equal(result.status, 0);
   assert.equal(result.stdout, "from stdin");
+});
+
+test("resolveModel defaults blank values to sonnet", () => {
+  assert.equal(resolveModel(undefined), "sonnet");
+  assert.equal(resolveModel("  "), "sonnet");
+  assert.equal(resolveModel(" opus "), "opus");
+  assert.equal(resolveModel("claude-fable-5-1"), "claude-fable-5-1");
+});
+
+test("buildClaudeArgs passes the default model when none is given", () => {
+  assert.match(buildClaudeArgs({}).join(" "), /--model sonnet/);
 });

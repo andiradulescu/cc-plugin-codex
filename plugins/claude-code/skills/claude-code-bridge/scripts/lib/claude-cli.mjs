@@ -71,6 +71,10 @@ export function readPrompt({ prompt, promptFile, stdin = "" } = {}) {
   throw new Error("A prompt is required. Pass --prompt, --prompt-file, or pipe stdin.");
 }
 
+export function resolveModel(model) {
+  return trimToNull(model) ?? DEFAULT_MODEL;
+}
+
 export function normalizeEffort(effort) {
   const normalized = trimToNull(effort);
   if (!normalized) {
@@ -112,10 +116,7 @@ export function buildClaudeArgs(options) {
     "--settings", SANDBOX_SETTINGS
   ];
 
-  const model = trimToNull(options.model) ?? DEFAULT_MODEL;
-  if (model) {
-    args.push("--model", model);
-  }
+  args.push("--model", resolveModel(options.model));
 
   const effort = normalizeEffort(options.effort);
   if (effort) {
