@@ -354,3 +354,24 @@ test("bridge forwards system prompt and JSON schema files to Claude", () => {
   assert.equal(argv[argv.indexOf("--system-prompt-file") + 1], systemFile);
   assert.equal(argv[argv.indexOf("--json-schema") + 1], schema);
 });
+
+test("bridge setup returns a complete JSON report with large auth output", (context) => {
+  const authOutput = "y".repeat(256 * 1024);
+  const cli = createFakeClaude(`
+if (process.argv[2] === "--version") {
+  process.stdout.write("2.1.308 (Claude Code)");
+} else {
+  process.stderr.write(${JSON.stringify(authOutput)});
+  process.exitCode = 1;
+}
+`);
+  context.after(() => fs.rmSync(path.dirname(cli), { recursive: true, force: true }));
+  const result = runBridge(["setup", "--json"], cli);
+
+  assert.equal(result.status, 1);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.ready, false);
+  assert.equal(report.cli.available, true);
+  assert.equal(report.auth.authenticated, false);
+  assert.equal(report.auth.stderr, authOutput);
+});

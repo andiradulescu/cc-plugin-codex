@@ -72,10 +72,11 @@ function output(payload, asJson) {
   process.stdout.write(payload);
 }
 
-function exitIfHostExecutionRequired(options, payload) {
+// Returns true after reporting that the command must be rerun outside the Codex sandbox.
+function reportHostExecutionRequired(options, payload) {
   const requirement = buildHostExecutionRequirement();
   if (!requirement.requiresHostExecution) {
-    return;
+    return false;
   }
 
   if (options.json) {
@@ -83,15 +84,19 @@ function exitIfHostExecutionRequired(options, payload) {
   } else {
     output(`${requirement.error.message}\n`, false);
   }
-  process.exit(1);
+  process.exitCode = 1;
+  return true;
 }
 
 function handleSetup(options) {
-  exitIfHostExecutionRequired(options, { ready: false });
+  if (reportHostExecutionRequired(options, { ready: false })) {
+    return;
+  }
   const report = buildSetupReport();
+  process.exitCode = report.ready ? 0 : 1;
   if (options.json) {
     output(report, true);
-    process.exit(report.ready ? 0 : 1);
+    return;
   }
 
   const lines = [];
@@ -113,11 +118,12 @@ function handleSetup(options) {
     }
   }
   output(`${lines.join("\n")}\n`, false);
-  process.exit(report.ready ? 0 : 1);
 }
 
 function handleRun(options) {
-  exitIfHostExecutionRequired(options, { ok: false });
+  if (reportHostExecutionRequired(options, { ok: false })) {
+    return;
+  }
 
   const stdin = readStdinIfPiped();
   const cwd = options.cwd ? path.resolve(options.cwd) : process.cwd();
