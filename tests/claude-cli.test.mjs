@@ -5,6 +5,7 @@ import {
   buildClaudeArgs,
   buildHostExecutionRequirement,
   buildSetupReport,
+  normalizeTimeoutSeconds,
   parseClaudeJson,
   renderRunText,
   resolveClaudeCli,
@@ -129,4 +130,29 @@ test("runChecked captures output larger than the default spawnSync buffer", () =
   assert.equal(result.error, null);
   assert.equal(result.status, 0);
   assert.equal(result.stdout.length, size);
+});
+
+test("normalizeTimeoutSeconds accepts positive seconds and rejects invalid values", () => {
+  assert.equal(normalizeTimeoutSeconds(undefined), null);
+  assert.equal(normalizeTimeoutSeconds(" "), null);
+  assert.equal(normalizeTimeoutSeconds("90"), 90);
+  assert.equal(normalizeTimeoutSeconds("1.5"), 1.5);
+
+  for (const invalid of ["0", "-5", "abc", "10s", "Infinity"]) {
+    assert.throws(() => normalizeTimeoutSeconds(invalid), /positive number of seconds/, invalid);
+  }
+});
+
+test("runChecked reports a timed out command", () => {
+  const result = runChecked(process.execPath, ["-e", "setTimeout(() => {}, 10000)"], { timeoutMs: 200 });
+
+  assert.equal(result.timedOut, true);
+  assert.notEqual(result.status, 0);
+});
+
+test("runChecked does not report a timeout for a completed command", () => {
+  const result = runChecked(process.execPath, ["-e", "process.stdout.write('done')"], { timeoutMs: 5000 });
+
+  assert.equal(result.timedOut, false);
+  assert.equal(result.stdout, "done");
 });

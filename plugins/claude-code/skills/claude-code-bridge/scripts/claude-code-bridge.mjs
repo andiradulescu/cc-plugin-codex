@@ -8,6 +8,7 @@ import {
   buildClaudeArgs,
   buildHostExecutionRequirement,
   buildSetupReport,
+  normalizeTimeoutSeconds,
   parseClaudeJson,
   renderRunText,
   resolveClaudeCli,
@@ -19,7 +20,7 @@ function printUsage() {
     [
       "Usage:",
       "  node claude-code-bridge.mjs setup [--json]",
-      "  node claude-code-bridge.mjs run [--model <model>] [--effort <level>] [--cwd <path>] [--prompt <text>|--prompt-file <path>] [--permission-mode <mode>] [--continue] [--resume <session-id>] [--json]"
+      "  node claude-code-bridge.mjs run [--model <model>] [--effort <level>] [--cwd <path>] [--prompt <text>|--prompt-file <path>] [--permission-mode <mode>] [--continue] [--resume <session-id>] [--timeout <seconds>] [--json]"
     ].join("\n") + "\n"
   );
 }
@@ -117,6 +118,7 @@ function handleRun(options) {
 
   const stdin = readStdinIfPiped();
   const cwd = options.cwd ? path.resolve(options.cwd) : process.cwd();
+  const timeoutSeconds = normalizeTimeoutSeconds(options.timeout);
   const command = resolveClaudeCli();
   const args = buildClaudeArgs({
     prompt: options.prompt,
@@ -132,7 +134,13 @@ function handleRun(options) {
     stdin
   });
 
-  const result = runChecked(command, args, { cwd });
+  const result = runChecked(command, args, {
+    cwd,
+    timeoutMs: timeoutSeconds == null ? undefined : timeoutSeconds * 1000
+  });
+  if (result.timedOut) {
+    throw new Error(`Claude Code timed out after ${timeoutSeconds}s.`);
+  }
   if (result.error) {
     throw result.error;
   }

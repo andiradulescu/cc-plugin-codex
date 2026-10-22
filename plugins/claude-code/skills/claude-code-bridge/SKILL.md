@@ -40,6 +40,8 @@ node <path-to-skill>/scripts/claude-code-bridge.mjs run \
   --json
 ```
 
+Runs have no time limit by default. Pass `--timeout <seconds>` only when the user wants a bound; long Fable runs can legitimately take a long time.
+
 Run `setup` only after a failed run to diagnose the Claude CLI version, installation, or authentication.
 
 ```bash

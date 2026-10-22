@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -42,4 +44,39 @@ test("bridge requires host execution for sandboxed setup and run", () => {
   assert.equal(result.status, 1);
   assert.equal(result.stderr, "");
   assert.match(result.stdout, /must run outside the Codex sandbox/);
+});
+
+function createFakeClaude(source) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "fake-claude-"));
+  const cli = path.join(dir, "claude");
+  fs.writeFileSync(cli, `#!/usr/bin/env node\n${source}\n`, { mode: 0o755 });
+  return cli;
+}
+
+function runBridge(args, cli) {
+  const hostEnv = { ...process.env, CLAUDE_CODE_CLI: cli };
+  delete hostEnv.CODEX_SANDBOX;
+  return spawnSync(process.execPath, [bridge, ...args], {
+    cwd: repoRoot,
+    env: hostEnv,
+    encoding: "utf8"
+  });
+}
+
+test("bridge stops a Claude run that exceeds --timeout", () => {
+  const cli = createFakeClaude("setTimeout(() => {}, 10000);");
+  const started = Date.now();
+  const result = runBridge(["run", "--prompt", "hello", "--timeout", "0.5"], cli);
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /timed out after 0\.5s/);
+  assert.ok(Date.now() - started < 5000, "bridge should not wait for the full child run");
+});
+
+test("bridge rejects an invalid --timeout", () => {
+  const cli = createFakeClaude("process.exit(0);");
+  const result = runBridge(["run", "--prompt", "hello", "--timeout", "soon"], cli);
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /positive number of seconds/);
 });

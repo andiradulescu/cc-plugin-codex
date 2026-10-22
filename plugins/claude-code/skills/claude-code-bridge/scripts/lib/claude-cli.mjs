@@ -82,6 +82,18 @@ export function normalizeEffort(effort) {
   return normalized;
 }
 
+export function normalizeTimeoutSeconds(timeout) {
+  const normalized = trimToNull(timeout);
+  if (!normalized) {
+    return null;
+  }
+  const seconds = Number(normalized);
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    throw new Error("Timeout must be a positive number of seconds.");
+  }
+  return seconds;
+}
+
 export const SANDBOX_SETTINGS = JSON.stringify({
   sandbox: {
     enabled: true,
@@ -163,20 +175,22 @@ export function renderRunText(parsed, model) {
   return `${lines.join("\n")}\n`;
 }
 
-export function runChecked(command, args, { cwd, env = process.env } = {}) {
+export function runChecked(command, args, { cwd, env = process.env, timeoutMs } = {}) {
   const result = spawnSync(command, args, {
     cwd,
     env,
     encoding: "utf8",
     // spawnSync defaults to a 1 MiB buffer; long Claude runs can exceed it.
-    maxBuffer: Infinity
+    maxBuffer: Infinity,
+    timeout: timeoutMs
   });
 
   return {
     status: result.status ?? 1,
     stdout: result.stdout ?? "",
     stderr: result.stderr ?? "",
-    error: result.error ?? null
+    error: result.error ?? null,
+    timedOut: result.error?.code === "ETIMEDOUT"
   };
 }
 
