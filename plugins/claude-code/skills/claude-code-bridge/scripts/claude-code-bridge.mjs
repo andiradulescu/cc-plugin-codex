@@ -6,6 +6,7 @@ import process from "node:process";
 
 import {
   buildClaudeArgs,
+  buildClaudeError,
   buildHostExecutionRequirement,
   buildSetupReport,
   normalizeTimeoutSeconds,
@@ -144,7 +145,14 @@ function handleRun(options) {
   if (result.error) {
     throw result.error;
   }
-  if (result.status !== 0) {
+
+  let parsed;
+  try {
+    parsed = parseClaudeJson(result.stdout);
+  } catch (parseError) {
+    if (result.status === 0) {
+      throw new Error(`Claude Code returned invalid JSON: ${parseError.message}`);
+    }
     const message = [
       `Claude Code exited with status ${result.status}.`,
       result.stderr.trim(),
@@ -155,10 +163,20 @@ function handleRun(options) {
     throw new Error(message);
   }
 
-  const parsed = parseClaudeJson(result.stdout);
+  const model = options.model ?? "sonnet";
+  if (result.status !== 0 || parsed.isError) {
+    const error = buildClaudeError(parsed, result.status);
+    if (options.json) {
+      output({ ok: false, model, cwd, sessionId: parsed.sessionId, error, raw: parsed.raw }, true);
+      process.exit(1);
+    }
+    const details = parsed.sessionId ? `${error.message}\nSession ID: ${parsed.sessionId}` : error.message;
+    throw new Error(details);
+  }
+
   const payload = {
     ok: true,
-    model: options.model ?? "sonnet",
+    model,
     cwd,
     sessionId: parsed.sessionId,
     result: parsed.result,

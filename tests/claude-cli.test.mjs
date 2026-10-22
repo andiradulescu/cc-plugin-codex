@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   buildClaudeArgs,
+  buildClaudeError,
   buildHostExecutionRequirement,
   buildSetupReport,
   normalizeTimeoutSeconds,
@@ -155,4 +156,48 @@ test("runChecked does not report a timeout for a completed command", () => {
 
   assert.equal(result.timedOut, false);
   assert.equal(result.stdout, "done");
+});
+
+const maxTurnsPayload = {
+  type: "result",
+  subtype: "error_max_turns",
+  is_error: true,
+  session_id: "43f7a822",
+  errors: ["Reached maximum number of turns (1)"]
+};
+
+test("parseClaudeJson exposes Claude error fields", () => {
+  const parsed = parseClaudeJson(JSON.stringify(maxTurnsPayload));
+
+  assert.equal(parsed.isError, true);
+  assert.equal(parsed.subtype, "error_max_turns");
+  assert.deepEqual(parsed.errors, ["Reached maximum number of turns (1)"]);
+  assert.equal(parsed.sessionId, "43f7a822");
+});
+
+test("parseClaudeJson treats a successful result as not an error", () => {
+  const parsed = parseClaudeJson(JSON.stringify({ result: "Done", is_error: false, subtype: "success" }));
+
+  assert.equal(parsed.isError, false);
+  assert.deepEqual(parsed.errors, []);
+});
+
+test("buildClaudeError uses the Claude subtype and error messages", () => {
+  const error = buildClaudeError(parseClaudeJson(JSON.stringify(maxTurnsPayload)), 1);
+
+  assert.deepEqual(error, {
+    code: "error_max_turns",
+    message: "Reached maximum number of turns (1)"
+  });
+});
+
+test("buildClaudeError falls back to the result text and exit status", () => {
+  assert.deepEqual(buildClaudeError(parseClaudeJson(JSON.stringify({ is_error: true, result: "Not logged in" })), 1), {
+    code: "claude_error",
+    message: "Not logged in"
+  });
+  assert.deepEqual(buildClaudeError(parseClaudeJson(JSON.stringify({ is_error: true })), 2), {
+    code: "claude_error",
+    message: "Claude Code exited with status 2."
+  });
 });

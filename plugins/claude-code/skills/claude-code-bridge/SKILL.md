@@ -65,6 +65,7 @@ node <path-to-skill>/scripts/claude-code-bridge.mjs setup --json
 ## Output handling
 
 - Prefer `--json` so Codex gets parsed `result`, `sessionId`, and optional `structuredOutput`.
+- A failed run with `--json` returns `ok: false` with `error.code` (for example `error_max_turns`), `error.message`, and `sessionId`. Use `--resume <sessionId>` to continue that run when it makes sense.
 - If Claude Code returns actionable findings, summarize them before proceeding.
 - If Claude Code edits files, inspect the diff before accepting the result.
 

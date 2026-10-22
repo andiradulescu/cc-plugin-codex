@@ -80,3 +80,73 @@ test("bridge rejects an invalid --timeout", () => {
   assert.equal(result.status, 1);
   assert.match(result.stderr, /positive number of seconds/);
 });
+
+const maxTurnsOutput = JSON.stringify({
+  type: "result",
+  subtype: "error_max_turns",
+  is_error: true,
+  session_id: "43f7a822",
+  errors: ["Reached maximum number of turns (1)"]
+});
+
+test("bridge returns Claude errors as JSON with the session id", () => {
+  const cli = createFakeClaude(`process.stdout.write(${JSON.stringify(maxTurnsOutput)}); process.exit(1);`);
+  const result = runBridge(["run", "--prompt", "hello", "--json"], cli);
+
+  assert.equal(result.status, 1);
+  assert.equal(result.stderr, "");
+
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.sessionId, "43f7a822");
+  assert.deepEqual(payload.error, {
+    code: "error_max_turns",
+    message: "Reached maximum number of turns (1)"
+  });
+});
+
+test("bridge reports Claude errors with the session id in text mode", () => {
+  const cli = createFakeClaude(`process.stdout.write(${JSON.stringify(maxTurnsOutput)}); process.exit(1);`);
+  const result = runBridge(["run", "--prompt", "hello"], cli);
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Reached maximum number of turns \(1\)/);
+  assert.match(result.stderr, /Session ID: 43f7a822/);
+});
+
+test("bridge treats is_error output as a failure even with exit status 0", () => {
+  const cli = createFakeClaude(`process.stdout.write(${JSON.stringify(maxTurnsOutput)});`);
+  const result = runBridge(["run", "--prompt", "hello", "--json"], cli);
+
+  assert.equal(result.status, 1);
+  assert.equal(JSON.parse(result.stdout).ok, false);
+});
+
+test("bridge reports non-JSON Claude failures on stderr", () => {
+  const cli = createFakeClaude(`process.stderr.write("boom"); process.exit(3);`);
+  const result = runBridge(["run", "--prompt", "hello", "--json"], cli);
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /exited with status 3/);
+  assert.match(result.stderr, /boom/);
+});
+
+test("bridge returns a successful Claude result", () => {
+  const output = JSON.stringify({ type: "result", subtype: "success", is_error: false, result: "Done", session_id: "s1" });
+  const cli = createFakeClaude(`process.stdout.write(${JSON.stringify(output)});`);
+  const result = runBridge(["run", "--prompt", "hello", "--json"], cli);
+
+  assert.equal(result.status, 0);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.result, "Done");
+  assert.equal(payload.sessionId, "s1");
+});
+
+test("bridge reports invalid JSON from a successful Claude run", () => {
+  const cli = createFakeClaude(`process.stdout.write("not json");`);
+  const result = runBridge(["run", "--prompt", "hello", "--json"], cli);
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /returned invalid JSON/);
+});

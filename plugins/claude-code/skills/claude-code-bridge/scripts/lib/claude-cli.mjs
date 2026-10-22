@@ -155,7 +155,17 @@ export function parseClaudeJson(stdout) {
     raw: payload,
     result: trimToNull(payload.result) ?? "",
     sessionId: trimToNull(payload.session_id) ?? null,
-    structuredOutput: payload.structured_output ?? null
+    structuredOutput: payload.structured_output ?? null,
+    isError: payload.is_error === true,
+    subtype: trimToNull(payload.subtype),
+    errors: Array.isArray(payload.errors) ? payload.errors.map(String) : []
+  };
+}
+
+export function buildClaudeError(parsed, status) {
+  return {
+    code: parsed.subtype ?? "claude_error",
+    message: parsed.errors.join("\n") || parsed.result || `Claude Code exited with status ${status}.`
   };
 }
 
