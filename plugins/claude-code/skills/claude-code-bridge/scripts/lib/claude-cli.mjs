@@ -173,7 +173,9 @@ export function parseClaudeJson(stdout) {
     structuredOutput: payload.structured_output ?? null,
     isError: payload.is_error === true,
     subtype: trimToNull(payload.subtype),
-    errors: Array.isArray(payload.errors) ? payload.errors.map(String) : []
+    errors: Array.isArray(payload.errors) ? payload.errors.map(String) : [],
+    // Claude Code can run a different model than requested, e.g. the haiku alias in plan mode runs Sonnet.
+    modelsUsed: payload.modelUsage && typeof payload.modelUsage === "object" ? Object.keys(payload.modelUsage) : []
   };
 }
 
@@ -187,6 +189,9 @@ export function buildClaudeError(parsed, status) {
 export function renderRunText(parsed, model) {
   const lines = [];
   lines.push(`Claude Code model: ${model}`);
+  if (parsed.modelsUsed?.length) {
+    lines.push(`Models used: ${parsed.modelsUsed.join(", ")}`);
+  }
   if (parsed.sessionId) {
     lines.push(`Session ID: ${parsed.sessionId}`);
   }

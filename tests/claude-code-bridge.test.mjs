@@ -500,3 +500,26 @@ test("bridge setup honors --timeout", () => {
   assert.match(text.stdout, /Error: claude --version timed out after 300ms/);
   assert.doesNotMatch(text.stdout, /Install Claude Code/);
 });
+
+test("bridge reports requested and actually used models", () => {
+  const output = JSON.stringify({ is_error: false, result: "OK", session_id: "m1", modelUsage: { "claude-sonnet-5-5": {} } });
+  const cli = createFakeClaude(`process.stdout.write(${JSON.stringify(output)});`);
+
+  const json = runBridge(["run", "--prompt", "hello", "--model", "haiku", "--permission-mode", "plan", "--json"], cli);
+  assert.equal(json.status, 0, json.stderr);
+  const payload = JSON.parse(json.stdout);
+  assert.equal(payload.model, "haiku");
+  assert.deepEqual(payload.modelsUsed, ["claude-sonnet-5-5"]);
+
+  const text = runBridge(["run", "--prompt", "hello", "--model", "haiku"], cli);
+  assert.match(text.stdout, /Models used: claude-sonnet-5-5/);
+});
+
+test("bridge reports used models on Claude errors", () => {
+  const output = JSON.stringify({ is_error: true, subtype: "error_max_turns", errors: ["max"], modelUsage: { "claude-haiku-5-5": {} } });
+  const cli = createFakeClaude(`process.stdout.write(${JSON.stringify(output)}); process.exitCode = 1;`);
+  const result = runBridge(["run", "--prompt", "hello", "--json"], cli);
+
+  assert.equal(result.status, 1);
+  assert.deepEqual(JSON.parse(result.stdout).modelsUsed, ["claude-haiku-5-5"]);
+});

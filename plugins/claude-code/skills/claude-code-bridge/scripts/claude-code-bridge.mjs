@@ -218,7 +218,7 @@ function handleRun(options) {
   if (result.status !== 0 || parsed.isError) {
     const error = buildClaudeError(parsed, result.status);
     if (options.json) {
-      output({ ok: false, model, cwd, sessionId: parsed.sessionId, error, raw: parsed.raw }, true);
+      output({ ok: false, model, modelsUsed: parsed.modelsUsed, cwd, sessionId: parsed.sessionId, error, raw: parsed.raw }, true);
       process.exitCode = 1;
       return;
     }
@@ -229,6 +229,7 @@ function handleRun(options) {
   const payload = {
     ok: true,
     model,
+    modelsUsed: parsed.modelsUsed,
     cwd,
     sessionId: parsed.sessionId,
     result: parsed.result,

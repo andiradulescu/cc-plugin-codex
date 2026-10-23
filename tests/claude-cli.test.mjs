@@ -276,3 +276,19 @@ test("buildSetupReport reports Claude commands that time out", (context) => {
   assert.equal(report.auth.authenticated, false);
   assert.match(report.auth.error, /claude auth status timed out after 300ms/);
 });
+
+test("parseClaudeJson lists the models Claude actually used", () => {
+  const parsed = parseClaudeJson(
+    JSON.stringify({ result: "OK", modelUsage: { "claude-sonnet-5-5": { costUSD: 0.01 }, "claude-haiku-5-5": { costUSD: 0 } } })
+  );
+
+  assert.deepEqual(parsed.modelsUsed, ["claude-sonnet-5-5", "claude-haiku-5-5"]);
+  assert.deepEqual(parseClaudeJson(JSON.stringify({ result: "OK" })).modelsUsed, []);
+});
+
+test("renderRunText shows the models Claude actually used", () => {
+  const output = renderRunText({ sessionId: "abc", structuredOutput: null, result: "OK", modelsUsed: ["claude-sonnet-5-5"] }, "haiku");
+
+  assert.match(output, /Claude Code model: haiku/);
+  assert.match(output, /Models used: claude-sonnet-5-5/);
+});
