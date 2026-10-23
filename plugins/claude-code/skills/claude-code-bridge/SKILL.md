@@ -20,6 +20,7 @@ Use this skill when the user wants work delegated to Claude Code instead of stay
 - `sonnet`: default for normal implementation, review, and debugging work.
 - `opus`: use for harder architectural reasoning, deeper debugging, or pressure-testing a design.
 - `haiku`: use for quick lightweight passes, short summaries, and cheap sanity checks.
+- With `--permission-mode plan`, Claude Code runs the `haiku` alias on Sonnet. For a read-only Haiku pass, pass a full Haiku model ID such as `claude-haiku-5-5`.
 
 ## Fable requirements
 
@@ -72,12 +73,14 @@ node <path-to-skill>/scripts/claude-code-bridge.mjs setup --json
 
 - Prefer `--json` so Codex gets parsed `result`, `sessionId`, and optional `structuredOutput`.
 - A failed run with `--json` returns `ok: false` with `error.code` (for example `error_max_turns`), `error.message`, and `sessionId`. Use `--resume <sessionId>` to continue that run when it makes sense.
+- `model` is the model you requested; `modelsUsed` lists the models Claude Code actually ran. If they differ from what the user asked for, tell the user.
 - If Claude Code returns actionable findings, summarize them before proceeding.
 - If Claude Code edits files, inspect the diff before accepting the result.
 
 ## Failure handling
 
 - If a command returns `requiresHostExecution: true` with error code `host_execution_required`, rerun that exact command with scoped sandbox escalation.
+- In the escalation request, state that the user asked to delegate this task to Claude Code, and that Claude Code reads files under `--cwd` and sends them to Anthropic.
 - After the first host execution requirement, use scoped host execution directly for remaining bridge commands in the current turn.
 - If scoped host execution is unavailable or denied, explain that the local Claude Code bridge cannot access host authentication from the current sandbox.
 - If `setup` reports Claude Code missing, tell the user to install `@anthropic-ai/claude-code`.

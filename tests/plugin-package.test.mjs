@@ -104,3 +104,12 @@ test("package and plugin manifest share one version", async () => {
   assert.match(manifest.version, /^\d+\.\d+\.\d+$/);
   assert.equal(manifest.version, packageJson.version);
 });
+
+test("packaged skill covers model switching and escalation context", async () => {
+  const skillPath = path.join(repoRoot, "plugins/claude-code/skills/claude-code-bridge/SKILL.md");
+  const skill = await fs.readFile(skillPath, "utf8");
+
+  assert.match(skill, /`haiku` alias on Sonnet/);
+  assert.match(skill, /`modelsUsed`/);
+  assert.match(skill, /escalation request, state that the user asked/);
+});
