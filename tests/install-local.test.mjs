@@ -199,3 +199,64 @@ test("local installer links the plugin and registers it", async (context) => {
   assert.equal(marketplace.plugins[0].source.path, "./.codex/plugins/claude-code");
   assert.match(stdout, /^ok /m, "rerunning symlink mode is idempotent");
 });
+
+// Copies the installer, marketplace, and plugin into a repo path containing a space, plus local-only files.
+async function createSpacedRepoCopy(context) {
+  const parent = await fs.mkdtemp(path.join(os.tmpdir(), "cc-plugin-codex-repo-"));
+  context.after(() => fs.rm(parent, { force: true, recursive: true }));
+  const root = path.join(parent, "my repo");
+  for (const relativePath of ["scripts/install-local.mjs", ".agents/plugins/marketplace.json", "plugins/claude-code"]) {
+    await fs.cp(path.join(repoRoot, relativePath), path.join(root, relativePath), {
+      recursive: true,
+      filter: (source) => !path.basename(source).startsWith(".DS_Store") && path.basename(source) !== ".claude"
+    });
+  }
+  const skillDir = path.join(root, "plugins/claude-code/skills/claude-code-bridge");
+  await fs.mkdir(path.join(skillDir, ".claude"), { recursive: true });
+  await fs.writeFile(path.join(skillDir, ".claude", "settings.local.json"), "{}\n");
+  await fs.writeFile(path.join(root, "plugins/claude-code/.DS_Store"), "");
+  return root;
+}
+
+async function runInstallerFrom(root, home, ...args) {
+  return execFileAsync(process.execPath, [path.join(root, "scripts", "install-local.mjs"), ...args], {
+    env: {
+      ...process.env,
+      HOME: home
+    }
+  });
+}
+
+test("local installer works from a repo path containing spaces", async (context) => {
+  const root = await createSpacedRepoCopy(context);
+  const home = await createTemporaryHome(context);
+
+  await runInstallerFrom(root, home);
+
+  const realRoot = await fs.realpath(root);
+  assert.equal(await fs.readlink(path.join(home, ".codex", "plugins", "claude-code")), path.join(realRoot, "plugins", "claude-code"));
+});
+
+test("local installer copy mode skips local-only files", async (context) => {
+  const root = await createSpacedRepoCopy(context);
+  const home = await createTemporaryHome(context);
+
+  await runInstallerFrom(root, home, "--mode", "copy");
+
+  const installed = path.join(home, ".codex", "plugins", "claude-code");
+  assert.equal(await pathExists(path.join(installed, "skills/claude-code-bridge/SKILL.md")), true);
+  assert.equal(await pathExists(path.join(installed, "skills/claude-code-bridge/scripts/lib/claude-cli.mjs")), true);
+  assert.equal(await pathExists(path.join(installed, "skills/claude-code-bridge/.claude")), false);
+  assert.equal(await pathExists(path.join(installed, ".DS_Store")), false);
+});
+
+test("local installer runs when invoked through a symlinked repo path", async (context) => {
+  const root = await createSpacedRepoCopy(context);
+  const home = await createTemporaryHome(context);
+  const linkedRoot = path.join(home, "linked repo");
+  await fs.symlink(root, linkedRoot);
+
+  const { stdout } = await runInstallerFrom(linkedRoot, home, "--dry-run");
+
+  assert.match(stdout, /codex plugin add claude-code@cc-plugin-codex/);
+});

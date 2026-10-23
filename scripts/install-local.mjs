@@ -1,12 +1,16 @@
+import { realpathSync } from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
-const REPO_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+const SCRIPT_PATH = fileURLToPath(import.meta.url);
+const REPO_ROOT = path.resolve(path.dirname(SCRIPT_PATH), "..");
 const PLUGIN_NAME = "claude-code";
 const ALLOWED_MODES = new Set(["copy", "symlink"]);
+// Local-only files (macOS metadata, Claude Code dev-session settings) that copy mode must not install.
+const LOCAL_ONLY_NAMES = new Set([".DS_Store", ".claude"]);
 
 function upsertPluginEntry(plugins, pluginEntry) {
   const existingPlugins = Array.isArray(plugins) ? plugins : [];
@@ -172,7 +176,10 @@ async function copyPath({ sourcePath, targetPath, dryRun, force }) {
   }
 
   if (sourceStat.isDirectory()) {
-    await fs.cp(sourcePath, targetPath, { recursive: true });
+    await fs.cp(sourcePath, targetPath, {
+      recursive: true,
+      filter: (source) => !LOCAL_ONLY_NAMES.has(path.basename(source))
+    });
   } else {
     await fs.copyFile(sourcePath, targetPath);
   }
@@ -258,7 +265,8 @@ async function main() {
   console.log(`Install with: codex plugin add ${PLUGIN_NAME}@${homeMarketplace.name}`);
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// Compare real paths: import.meta.url is resolved through symlinks, process.argv[1] is not.
+if (process.argv[1] && realpathSync(process.argv[1]) === SCRIPT_PATH) {
   main().catch((error) => {
     console.error(error.message);
     process.exitCode = 1;
