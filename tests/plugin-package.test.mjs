@@ -88,3 +88,11 @@ test("packaged skill documents every run flag", async () => {
     assert.match(skill, new RegExp(`\`${flag} `), flag);
   }
 });
+
+test("packaged skill says file options take absolute paths", async () => {
+  const skillPath = path.join(repoRoot, "plugins/claude-code/skills/claude-code-bridge/SKILL.md");
+  const skill = await fs.readFile(skillPath, "utf8");
+
+  assert.match(skill, /absolute paths/);
+  assert.match(skill, /not from `--cwd`/);
+});

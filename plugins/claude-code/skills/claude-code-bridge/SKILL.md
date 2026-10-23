@@ -56,6 +56,7 @@ node <path-to-skill>/scripts/claude-code-bridge.mjs setup --json
 - For review tasks, ask for findings ordered by severity and request missing-test coverage.
 - Use `--prompt` for short prompts.
 - For large prompts, write them to a temp file and use `--prompt-file`.
+- Pass absolute paths to `--prompt-file` and the other file options. Relative paths resolve from the directory the bridge is launched in, not from `--cwd`.
 - Use `--append-system-prompt-file <path>` to add instructions on top of Claude Code's default system prompt.
 - Use `--system-prompt-file <path>` only when the default system prompt must be replaced entirely.
 - Use `--json-schema-file <path>` when Codex needs machine-readable output; the result is returned as `structuredOutput`.

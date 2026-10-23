@@ -24,7 +24,9 @@ function printUsage() {
       "Usage:",
       "  node claude-code-bridge.mjs setup [--json]",
       "  node claude-code-bridge.mjs run [--model <model>] [--effort <level>] [--cwd <path>] [--prompt <text>|--prompt-file <path>] [--permission-mode <mode>] [--continue] [--resume <session-id>] [--timeout <seconds>] [--json]",
-      "      [--append-system-prompt-file <path>] [--system-prompt-file <path>] [--json-schema-file <path>]"
+      "      [--append-system-prompt-file <path>] [--system-prompt-file <path>] [--json-schema-file <path>]",
+      "",
+      "Relative file paths resolve from the current directory, not from --cwd."
     ].join("\n") + "\n"
   );
 }

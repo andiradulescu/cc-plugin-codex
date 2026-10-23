@@ -479,3 +479,9 @@ test("bridge rejects an unknown command", () => {
   assert.equal(result.status, 1);
   assert.match(result.stderr, /Unknown command: bogus/);
 });
+
+test("bridge help says file options resolve from the launch directory", () => {
+  const result = spawnSync(process.execPath, [bridge, "--help"], { encoding: "utf8" });
+
+  assert.match(result.stdout, /not from --cwd/);
+});
