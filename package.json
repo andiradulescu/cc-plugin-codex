@@ -1,6 +1,6 @@
 {
   "name": "cc-plugin-codex",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Codex plugin that delegates work to Claude Code via the local Claude CLI.",
