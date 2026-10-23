@@ -131,3 +131,71 @@ test("personal marketplace merge preserves existing plugins and replaces claude-
   assert.equal(merged.plugins[1].policy.authentication, "ON_INSTALL");
   assert.equal(merged.plugins[1].category, "Coding");
 });
+
+async function pathExists(filePath) {
+  try {
+    await fs.lstat(filePath);
+    return true;
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return false;
+    }
+    throw error;
+  }
+}
+
+test("local installer rejects unknown options before writing anything", async (context) => {
+  const home = await createTemporaryHome(context);
+
+  for (const option of ["--dryrun", "--dry_run", "--forse", "extra"]) {
+    await assert.rejects(runInstaller(home, option), (error) => {
+      assert.match(error.stderr, new RegExp(`Unknown option: ${option}`));
+      return true;
+    });
+  }
+
+  assert.deepEqual(await fs.readdir(home), []);
+});
+
+test("local installer rejects --mode without a value", async (context) => {
+  const home = await createTemporaryHome(context);
+
+  await assert.rejects(runInstaller(home, "--mode"), /Unsupported mode/);
+  await assert.rejects(runInstaller(home, "--mode", "--dry-run"), /Unsupported mode/);
+  assert.deepEqual(await fs.readdir(home), []);
+});
+
+test("local installer leaves the marketplace untouched when the plugin path conflicts", async (context) => {
+  const home = await createTemporaryHome(context);
+  const pluginPath = path.join(home, ".codex", "plugins", "claude-code");
+  await fs.mkdir(pluginPath, { recursive: true });
+
+  await assert.rejects(runInstaller(home), /Refusing to replace existing path without --force/);
+
+  assert.equal(await pathExists(path.join(home, ".agents", "plugins", "marketplace.json")), false);
+});
+
+test("local installer leaves the plugin path untouched when the marketplace is a symlink", async (context) => {
+  const home = await createTemporaryHome(context);
+  const marketplacePath = path.join(home, ".agents", "plugins", "marketplace.json");
+  await fs.mkdir(path.dirname(marketplacePath), { recursive: true });
+  await fs.writeFile(path.join(home, "real-marketplace.json"), "{}\n");
+  await fs.symlink(path.join(home, "real-marketplace.json"), marketplacePath);
+
+  await assert.rejects(runInstaller(home), /Refusing to replace symlink without --force/);
+
+  assert.equal(await pathExists(path.join(home, ".codex", "plugins", "claude-code")), false);
+});
+
+test("local installer links the plugin and registers it", async (context) => {
+  const home = await createTemporaryHome(context);
+
+  await runInstaller(home);
+  const { stdout } = await runInstaller(home);
+
+  const pluginPath = path.join(home, ".codex", "plugins", "claude-code");
+  assert.equal(await fs.readlink(pluginPath), path.join(repoRoot, "plugins", "claude-code"));
+  const marketplace = JSON.parse(await fs.readFile(path.join(home, ".agents", "plugins", "marketplace.json"), "utf8"));
+  assert.equal(marketplace.plugins[0].source.path, "./.codex/plugins/claude-code");
+  assert.match(stdout, /^ok /m, "rerunning symlink mode is idempotent");
+});

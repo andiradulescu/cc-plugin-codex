@@ -49,16 +49,22 @@ export function mergeHomeMarketplace({ repoMarketplace, existingMarketplace }) {
 
 function parseArgs(argv) {
   let mode = "symlink";
+  let dryRun = false;
+  let force = false;
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === "--mode") {
+    if (arg === "--dry-run") {
+      dryRun = true;
+    } else if (arg === "--force") {
+      force = true;
+    } else if (arg === "--mode") {
       mode = argv[index + 1] ?? "";
       index += 1;
-      continue;
-    }
-    if (arg.startsWith("--mode=")) {
+    } else if (arg.startsWith("--mode=")) {
       mode = arg.slice("--mode=".length);
+    } else {
+      throw new Error(`Unknown option: ${arg}. Use --mode copy|symlink, --dry-run, or --force.`);
     }
   }
 
@@ -66,11 +72,7 @@ function parseArgs(argv) {
     throw new Error("Unsupported mode. Use --mode copy or --mode symlink.");
   }
 
-  return {
-    dryRun: argv.includes("--dry-run"),
-    force: argv.includes("--force"),
-    mode
-  };
+  return { dryRun, force, mode };
 }
 
 async function ensureParentDir(filePath, { dryRun }) {
@@ -178,12 +180,16 @@ async function copyPath({ sourcePath, targetPath, dryRun, force }) {
   console.log(`copied ${sourcePath} -> ${targetPath}`);
 }
 
-async function writeJsonFile({ filePath, value, dryRun, force }) {
+async function checkJsonTarget({ filePath, force }) {
   const existing = await readExistingSymlink(filePath);
-
   if (existing.exists && existing.isSymlink && !force) {
     throw new Error(`Refusing to replace symlink without --force: ${filePath}`);
   }
+  return existing;
+}
+
+async function writeJsonFile({ filePath, value, dryRun, force }) {
+  const existing = await checkJsonTarget({ filePath, force });
 
   await ensureParentDir(filePath, { dryRun });
 
@@ -221,12 +227,9 @@ async function main() {
     existingMarketplace: existingHomeMarketplace
   });
 
-  await writeJsonFile({
-    filePath: targetMarketplace,
-    value: homeMarketplace,
-    dryRun,
-    force
-  });
+  // Check the marketplace before installing the plugin, and register it only after the plugin is in place,
+  // so a refused or failed step never leaves a marketplace entry pointing at a missing plugin.
+  await checkJsonTarget({ filePath: targetMarketplace, force });
 
   if (mode === "symlink") {
     await ensureSymlink({
@@ -244,6 +247,13 @@ async function main() {
       force
     });
   }
+
+  await writeJsonFile({
+    filePath: targetMarketplace,
+    value: homeMarketplace,
+    dryRun,
+    force
+  });
 
   console.log(`Install with: codex plugin add ${PLUGIN_NAME}@${homeMarketplace.name}`);
 }
