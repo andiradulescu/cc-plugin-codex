@@ -125,14 +125,13 @@ function handleRun(options) {
     return;
   }
 
-  const stdin = readStdinIfPiped();
   const cwd = options.cwd ? path.resolve(options.cwd) : process.cwd();
   const timeoutSeconds = normalizeTimeoutSeconds(options.timeout);
   const command = resolveClaudeCli();
   const prompt = readPrompt({
     prompt: options.prompt,
     promptFile: options["prompt-file"],
-    stdin
+    readStdin: readStdinIfPiped
   });
   const args = buildClaudeArgs({
     model: options.model,

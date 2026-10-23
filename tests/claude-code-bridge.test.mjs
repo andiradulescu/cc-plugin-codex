@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -374,4 +374,61 @@ if (process.argv[2] === "--version") {
   assert.equal(report.cli.available, true);
   assert.equal(report.auth.authenticated, false);
   assert.equal(report.auth.stderr, authOutput);
+});
+
+test("bridge does not read stdin when --prompt is given", async () => {
+  const cli = createFakeClaude(echoPromptSource);
+  const hostEnv = { ...process.env, CLAUDE_CODE_CLI: cli };
+  delete hostEnv.CODEX_SANDBOX;
+  // stdin stays open and is never written to, like an idle pipe or socket from the caller.
+  const child = spawn(process.execPath, [bridge, "run", "--prompt", "hello", "--json"], {
+    cwd: repoRoot,
+    env: hostEnv,
+    stdio: ["pipe", "pipe", "pipe"]
+  });
+  let stdout = "";
+  let stderr = "";
+  child.stdout.on("data", (chunk) => (stdout += chunk));
+  child.stderr.on("data", (chunk) => (stderr += chunk));
+
+  const status = await new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      child.kill();
+      resolve("blocked on stdin");
+    }, 5000);
+    child.on("exit", (code) => {
+      clearTimeout(timer);
+      resolve(code);
+    });
+  });
+  child.stdin.destroy();
+
+  assert.equal(status, 0, stderr);
+  assert.equal(JSON.parse(stdout).result, "hello");
+});
+
+test("bridge reads the prompt from stdin when no prompt flag is given", () => {
+  const cli = createFakeClaude(echoPromptSource);
+  const hostEnv = { ...process.env, CLAUDE_CODE_CLI: cli };
+  delete hostEnv.CODEX_SANDBOX;
+  const result = spawnSync(process.execPath, [bridge, "run", "--json"], {
+    cwd: repoRoot,
+    env: hostEnv,
+    input: "piped prompt",
+    encoding: "utf8"
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).result, "piped prompt");
+});
+
+test("bridge rejects an empty prompt file without running Claude", () => {
+  const cli = createFakeClaude(`require("node:fs").writeFileSync(${JSON.stringify(path.join(tempRoot, "claude-ran"))}, "");`);
+  const promptFile = path.join(createTempDir(), "prompt.txt");
+  fs.writeFileSync(promptFile, "");
+  const result = runBridge(["run", "--prompt-file", promptFile, "--json"], cli);
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Prompt file is empty/);
+  assert.equal(fs.existsSync(path.join(tempRoot, "claude-ran")), false);
 });

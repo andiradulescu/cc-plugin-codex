@@ -52,7 +52,8 @@ export function resolveClaudeCli({ env = process.env, homeDir = os.homedir(), ex
   return "claude";
 }
 
-export function readPrompt({ prompt, promptFile, stdin = "" } = {}) {
+// readStdin is only called when neither prompt nor promptFile is given, so an idle stdin cannot block or fail the run.
+export function readPrompt({ prompt, promptFile, readStdin = () => "" } = {}) {
   const inlinePrompt = trimToNull(prompt);
   if (inlinePrompt) {
     return inlinePrompt;
@@ -60,10 +61,15 @@ export function readPrompt({ prompt, promptFile, stdin = "" } = {}) {
 
   const filePath = trimToNull(promptFile);
   if (filePath) {
-    return fs.readFileSync(path.resolve(filePath), "utf8");
+    const resolvedPath = path.resolve(filePath);
+    const filePrompt = fs.readFileSync(resolvedPath, "utf8");
+    if (!trimToNull(filePrompt)) {
+      throw new Error(`Prompt file is empty: ${resolvedPath}`);
+    }
+    return filePrompt;
   }
 
-  const piped = trimToNull(stdin);
+  const piped = trimToNull(readStdin());
   if (piped) {
     return piped;
   }

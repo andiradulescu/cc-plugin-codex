@@ -1,5 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 import {
   buildClaudeArgs,
@@ -8,6 +11,7 @@ import {
   buildSetupReport,
   normalizeTimeoutSeconds,
   parseClaudeJson,
+  readPrompt,
   renderRunText,
   resolveClaudeCli,
   resolveModel,
@@ -220,4 +224,30 @@ test("resolveModel defaults blank values to sonnet", () => {
 
 test("buildClaudeArgs passes the default model when none is given", () => {
   assert.match(buildClaudeArgs({}).join(" "), /--model sonnet/);
+});
+
+test("readPrompt only reads stdin when no prompt or prompt file is given", () => {
+  let stdinReads = 0;
+  const readStdin = () => {
+    stdinReads += 1;
+    return "from stdin";
+  };
+
+  assert.equal(readPrompt({ prompt: "inline", readStdin }), "inline");
+  assert.equal(stdinReads, 0);
+  assert.equal(readPrompt({ readStdin }), "from stdin");
+  assert.equal(stdinReads, 1);
+});
+
+test("readPrompt rejects an empty prompt file", (context) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "read-prompt-"));
+  context.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const promptFile = path.join(dir, "prompt.txt");
+  fs.writeFileSync(promptFile, " \n\t\n");
+
+  assert.throws(() => readPrompt({ promptFile, readStdin: () => "unused" }), /Prompt file is empty/);
+});
+
+test("readPrompt requires some prompt", () => {
+  assert.throws(() => readPrompt({ readStdin: () => "  " }), /A prompt is required/);
 });
