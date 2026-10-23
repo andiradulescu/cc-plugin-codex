@@ -432,3 +432,50 @@ test("bridge rejects an empty prompt file without running Claude", () => {
   assert.match(result.stderr, /Prompt file is empty/);
   assert.equal(fs.existsSync(path.join(tempRoot, "claude-ran")), false);
 });
+
+test("bridge rejects unknown run options instead of ignoring them", () => {
+  const cli = createFakeClaude(echoPromptSource);
+
+  for (const [flag, value] of [["--timout", "5"], ["--modle", "opus"], ["--json-schema", "schema.json"]]) {
+    const result = runBridge(["run", "--prompt", "hello", flag, value, "--json"], cli);
+    assert.equal(result.status, 1, flag);
+    assert.equal(result.stdout, "", flag);
+    assert.match(result.stderr, new RegExp(`Unknown option ${flag} for run`), flag);
+  }
+});
+
+test("bridge rejects unknown setup options", () => {
+  const result = runBridge(["setup", "--model", "opus"], "/path/that/does/not/exist");
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Unknown option --model for setup/);
+});
+
+test("bridge rejects unexpected positional arguments", () => {
+  const result = runBridge(["run", "--prompt", "hello", "extra"], createFakeClaude(echoPromptSource));
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Unexpected argument: extra/);
+});
+
+test("bridge rejects an option whose value is another option", () => {
+  const result = runBridge(["run", "--prompt", "hello", "--model", "--json"], createFakeClaude(echoPromptSource));
+
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, "");
+  assert.match(result.stderr, /Missing value for --model/);
+});
+
+test("bridge allows a prompt that starts with dashes", () => {
+  const result = runBridge(["run", "--prompt", "--force is ignored by the CLI", "--json"], createFakeClaude(echoPromptSource));
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).result, "--force is ignored by the CLI");
+});
+
+test("bridge rejects an unknown command", () => {
+  const result = runBridge(["bogus", "--json"], "/path/that/does/not/exist");
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Unknown command: bogus/);
+});

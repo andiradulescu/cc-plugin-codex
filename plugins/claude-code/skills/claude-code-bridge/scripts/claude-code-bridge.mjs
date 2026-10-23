@@ -36,32 +36,61 @@ function readStdinIfPiped() {
   return fs.readFileSync(0, "utf8");
 }
 
-function parseArgs(argv) {
+// Options each command accepts; anything else is rejected so a mistyped flag cannot silently change a run.
+const COMMAND_OPTIONS = {
+  setup: {
+    flags: new Set(["json"]),
+    values: new Set()
+  },
+  run: {
+    flags: new Set(["json", "continue"]),
+    values: new Set([
+      "model",
+      "effort",
+      "cwd",
+      "prompt",
+      "prompt-file",
+      "permission-mode",
+      "resume",
+      "timeout",
+      "append-system-prompt-file",
+      "system-prompt-file",
+      "json-schema-file"
+    ])
+  }
+};
+
+// Free-text values may legitimately start with "--".
+const FREE_TEXT_OPTIONS = new Set(["prompt"]);
+
+function parseArgs(command, argv) {
+  const { flags, values } = COMMAND_OPTIONS[command];
   const options = {};
-  const positionals = [];
 
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
     if (!value.startsWith("--")) {
-      positionals.push(value);
-      continue;
+      throw new Error(`Unexpected argument: ${value}`);
     }
 
     const key = value.slice(2);
-    if (["json", "continue"].includes(key)) {
+    if (flags.has(key)) {
       options[key] = true;
       continue;
     }
+    if (!values.has(key)) {
+      throw new Error(`Unknown option --${key} for ${command}. Run with --help for usage.`);
+    }
 
     const next = argv[index + 1];
-    if (next == null) {
+    if (next == null || (next.startsWith("--") && !FREE_TEXT_OPTIONS.has(key))) {
       throw new Error(`Missing value for --${key}.`);
     }
     options[key] = next;
     index += 1;
   }
 
-  return { options, positionals };
+  return options;
 }
 
 function output(payload, asJson) {
@@ -213,17 +242,16 @@ function main() {
     return;
   }
 
-  const { options } = parseArgs(rest);
+  if (!Object.hasOwn(COMMAND_OPTIONS, command)) {
+    throw new Error(`Unknown command: ${command}`);
+  }
+
+  const options = parseArgs(command, rest);
   if (command === "setup") {
     handleSetup(options);
     return;
   }
-  if (command === "run") {
-    handleRun(options);
-    return;
-  }
-
-  throw new Error(`Unknown command: ${command}`);
+  handleRun(options);
 }
 
 try {
