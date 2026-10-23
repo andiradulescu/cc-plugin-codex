@@ -1,6 +1,6 @@
 {
   "name": "claude-code",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Use Claude Code from Codex to delegate work to Fable, Opus, Sonnet, or Haiku through the local Claude CLI.",
   "author": {
     "name": "Andrei Radulescu",

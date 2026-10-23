@@ -96,3 +96,11 @@ test("packaged skill says file options take absolute paths", async () => {
   assert.match(skill, /absolute paths/);
   assert.match(skill, /not from `--cwd`/);
 });
+
+test("package and plugin manifest share one version", async () => {
+  const packageJson = await readJson("package.json");
+  const manifest = await readJson("plugins/claude-code/.codex-plugin/plugin.json");
+
+  assert.match(manifest.version, /^\d+\.\d+\.\d+$/);
+  assert.equal(manifest.version, packageJson.version);
+});
