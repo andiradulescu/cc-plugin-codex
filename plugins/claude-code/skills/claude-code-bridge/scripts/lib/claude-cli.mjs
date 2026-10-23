@@ -104,6 +104,14 @@ export function normalizeTimeoutSeconds(timeout) {
   return seconds;
 }
 
+// spawnSync needs a positive integer; 0 would mean "no timeout".
+export function timeoutSecondsToMs(seconds) {
+  if (seconds == null) {
+    return undefined;
+  }
+  return Math.max(1, Math.round(seconds * 1000));
+}
+
 export const SANDBOX_SETTINGS = JSON.stringify({
   sandbox: {
     enabled: true,
@@ -212,7 +220,14 @@ export function runChecked(command, args, { cwd, env = process.env, timeoutMs, i
   };
 }
 
-export function buildSetupReport({ env = process.env, cwd = process.cwd(), homeDir, existsSync } = {}) {
+function describeCommandError(result, label, timeoutMs) {
+  if (result.timedOut) {
+    return `${label} timed out after ${timeoutMs}ms.`;
+  }
+  return result.error?.message ?? null;
+}
+
+export function buildSetupReport({ env = process.env, cwd = process.cwd(), homeDir, existsSync, timeoutMs } = {}) {
   let command;
   try {
     command = resolveClaudeCli({ env, homeDir, existsSync });
@@ -230,8 +245,8 @@ export function buildSetupReport({ env = process.env, cwd = process.cwd(), homeD
     };
   }
 
-  const version = runChecked(command, ["--version"], { cwd, env });
-  const auth = runChecked(command, ["auth", "status"], { cwd, env });
+  const version = runChecked(command, ["--version"], { cwd, env, timeoutMs });
+  const auth = runChecked(command, ["auth", "status"], { cwd, env, timeoutMs });
 
   let authPayload = null;
   try {
@@ -249,10 +264,12 @@ export function buildSetupReport({ env = process.env, cwd = process.cwd(), homeD
       available,
       command,
       version: trimToNull(version.stdout) ?? trimToNull(version.stderr),
-      error: version.error?.message ?? null
+      error: describeCommandError(version, "claude --version", timeoutMs),
+      timedOut: version.timedOut
     },
     auth: {
       authenticated,
+      error: describeCommandError(auth, "claude auth status", timeoutMs),
       payload: authPayload,
       stderr: trimToNull(auth.stderr),
       stdout: trimToNull(auth.stdout)

@@ -15,7 +15,8 @@ import {
   renderRunText,
   resolveClaudeCli,
   resolveModel,
-  runChecked
+  runChecked,
+  timeoutSecondsToMs
 } from "../plugins/claude-code/skills/claude-code-bridge/scripts/lib/claude-cli.mjs";
 
 test("buildHostExecutionRequirement identifies the Codex sandbox", () => {
@@ -250,4 +251,28 @@ test("readPrompt rejects an empty prompt file", (context) => {
 
 test("readPrompt requires some prompt", () => {
   assert.throws(() => readPrompt({ readStdin: () => "  " }), /A prompt is required/);
+});
+
+test("timeoutSecondsToMs converts to positive integer milliseconds", () => {
+  assert.equal(timeoutSecondsToMs(null), undefined);
+  assert.equal(timeoutSecondsToMs(90), 90000);
+  assert.equal(timeoutSecondsToMs(1.001), 1001);
+  assert.equal(timeoutSecondsToMs(0.0001), 1);
+});
+
+test("buildSetupReport reports Claude commands that time out", (context) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "setup-timeout-"));
+  context.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const cli = path.join(dir, "claude");
+  fs.writeFileSync(cli, "#!/usr/bin/env node\nsetTimeout(() => {}, 10000);\n", { mode: 0o755 });
+
+  const started = Date.now();
+  const report = buildSetupReport({ env: { ...process.env, CLAUDE_CODE_CLI: cli }, timeoutMs: 300 });
+
+  assert.ok(Date.now() - started < 5000, "setup should not wait for hung commands");
+  assert.equal(report.ready, false);
+  assert.equal(report.cli.available, false);
+  assert.match(report.cli.error, /claude --version timed out after 300ms/);
+  assert.equal(report.auth.authenticated, false);
+  assert.match(report.auth.error, /claude auth status timed out after 300ms/);
 });

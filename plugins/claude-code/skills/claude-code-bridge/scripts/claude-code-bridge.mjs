@@ -15,14 +15,15 @@ import {
   renderRunText,
   resolveClaudeCli,
   resolveModel,
-  runChecked
+  runChecked,
+  timeoutSecondsToMs
 } from "./lib/claude-cli.mjs";
 
 function printUsage() {
   process.stdout.write(
     [
       "Usage:",
-      "  node claude-code-bridge.mjs setup [--json]",
+      "  node claude-code-bridge.mjs setup [--timeout <seconds>] [--json]",
       "  node claude-code-bridge.mjs run [--model <model>] [--effort <level>] [--cwd <path>] [--prompt <text>|--prompt-file <path>] [--permission-mode <mode>] [--continue] [--resume <session-id>] [--timeout <seconds>] [--json]",
       "      [--append-system-prompt-file <path>] [--system-prompt-file <path>] [--json-schema-file <path>]",
       "",
@@ -42,7 +43,7 @@ function readStdinIfPiped() {
 const COMMAND_OPTIONS = {
   setup: {
     flags: new Set(["json"]),
-    values: new Set()
+    values: new Set(["timeout"])
   },
   run: {
     flags: new Set(["json", "continue"]),
@@ -123,7 +124,7 @@ function handleSetup(options) {
   if (reportHostExecutionRequired(options, { ready: false })) {
     return;
   }
-  const report = buildSetupReport();
+  const report = buildSetupReport({ timeoutMs: timeoutSecondsToMs(normalizeTimeoutSeconds(options.timeout)) });
   process.exitCode = report.ready ? 0 : 1;
   if (options.json) {
     output(report, true);
@@ -138,10 +139,16 @@ function handleSetup(options) {
   if (report.cli.version) {
     lines.push(`Version: ${report.cli.version}`);
   }
+  if (report.cli.error) {
+    lines.push(`Error: ${report.cli.error}`);
+  }
   lines.push(`Authenticated: ${report.auth.authenticated ? "yes" : "no"}`);
+  if (report.auth.error) {
+    lines.push(`Auth error: ${report.auth.error}`);
+  }
   if (!report.ready) {
     lines.push("Next steps:");
-    if (!report.cli.available) {
+    if (!report.cli.available && !report.cli.timedOut) {
       lines.push("- Install Claude Code with `npm install -g @anthropic-ai/claude-code`.");
     }
     if (report.cli.available && !report.auth.authenticated) {
@@ -178,7 +185,7 @@ function handleRun(options) {
   const result = runChecked(command, args, {
     cwd,
     input: prompt,
-    timeoutMs: timeoutSeconds == null ? undefined : Math.max(1, Math.round(timeoutSeconds * 1000))
+    timeoutMs: timeoutSecondsToMs(timeoutSeconds)
   });
   if (result.timedOut) {
     throw new Error(`Claude Code timed out after ${timeoutSeconds}s.`);

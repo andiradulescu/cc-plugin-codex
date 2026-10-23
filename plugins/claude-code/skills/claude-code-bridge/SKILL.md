@@ -48,6 +48,8 @@ Run `setup` only after a failed run to diagnose the Claude CLI version, installa
 node <path-to-skill>/scripts/claude-code-bridge.mjs setup --json
 ```
 
+`setup` also accepts `--timeout <seconds>` to bound the `claude --version` and `claude auth status` checks.
+
 ## Prompting rules
 
 - Keep prompts concrete and task-shaped.

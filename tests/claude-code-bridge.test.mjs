@@ -485,3 +485,18 @@ test("bridge help says file options resolve from the launch directory", () => {
 
   assert.match(result.stdout, /not from --cwd/);
 });
+
+test("bridge setup honors --timeout", () => {
+  const cli = createFakeClaude("setTimeout(() => {}, 10000);");
+  const started = Date.now();
+  const json = runBridge(["setup", "--timeout", "0.3", "--json"], cli);
+
+  assert.ok(Date.now() - started < 5000, "setup should not wait for hung commands");
+  assert.equal(json.status, 1);
+  assert.match(JSON.parse(json.stdout).cli.error, /timed out after 300ms/);
+
+  const text = runBridge(["setup", "--timeout", "0.3"], cli);
+  assert.equal(text.status, 1);
+  assert.match(text.stdout, /Error: claude --version timed out after 300ms/);
+  assert.doesNotMatch(text.stdout, /Install Claude Code/);
+});
