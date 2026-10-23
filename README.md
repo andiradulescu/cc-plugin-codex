@@ -78,7 +78,7 @@ npm run install:local
 
 The helper merges the plugin entry into `~/.agents/plugins/marketplace.json` and symlinks the plugin directory into `~/.codex/plugins/claude-code`. It registers the marketplace source but does not install or enable the plugin. It prints the exact `codex plugin add` command for the resulting marketplace, including an existing personal marketplace name when one is already configured. Run that command or install the plugin from the desktop plugin directory.
 
-The ChatGPT desktop app installs a cached copy of a local plugin instead of loading directly from the marketplace source. Restart the app after changing the plugin so it refreshes the installed copy.
+Codex runs an installed copy of the plugin from `~/.codex/plugins/cache/<marketplace>/claude-code/<version>`, not the marketplace source, even in symlink mode. After changing the plugin, rerun `codex plugin add claude-code@<marketplace>` to refresh that copy, then start a new Codex session. The ChatGPT desktop app also needs a restart to pick up the refreshed copy.
 
 To copy files, which matches OpenAI's documented manual local-install layout, instead of symlinking:
 

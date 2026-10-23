@@ -113,3 +113,10 @@ test("packaged skill covers model switching and escalation context", async () =>
   assert.match(skill, /`modelsUsed`/);
   assert.match(skill, /escalation request, state that the user asked/);
 });
+
+test("readme explains that Codex runs a cached plugin copy", async () => {
+  const readme = await fs.readFile(path.join(repoRoot, "README.md"), "utf8");
+
+  assert.match(readme, /~\/\.codex\/plugins\/cache/);
+  assert.match(readme, /rerun `codex plugin add/);
+});
