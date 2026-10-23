@@ -300,14 +300,22 @@ test("bridge sends a large prompt file to Claude on stdin", () => {
 test("bridge reports the model Claude actually ran with", () => {
   const cli = createFakeClaude(echoPromptSource);
 
-  for (const [args, expected] of [[[], "sonnet"], [["--model", " "], "sonnet"], [["--model", "opus"], "opus"]]) {
+  for (const args of [[], ["--model", " "]]) {
     const result = runBridge(["run", "--prompt", "hello", "--json", ...args], cli);
     assert.equal(result.status, 0, result.stderr);
 
     const payload = JSON.parse(result.stdout);
-    assert.equal(payload.model, expected);
-    assert.equal(payload.raw.argv[payload.raw.argv.indexOf("--model") + 1], expected);
+    assert.equal(payload.model, "default");
+    assert.equal(payload.raw.argv.includes("--model"), false, "Claude Code chooses its configured default");
   }
+
+  const explicit = runBridge(["run", "--prompt", "hello", "--json", "--model", "opus"], cli);
+  const payload = JSON.parse(explicit.stdout);
+  assert.equal(payload.model, "opus");
+  assert.equal(payload.raw.argv[payload.raw.argv.indexOf("--model") + 1], "opus");
+
+  const text = runBridge(["run", "--prompt", "hello"], cli);
+  assert.match(text.stdout, /Claude Code model: default/);
 });
 
 test("bridge setup only suggests steps that apply to the failure", () => {

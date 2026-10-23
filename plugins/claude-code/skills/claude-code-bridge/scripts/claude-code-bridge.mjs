@@ -9,6 +9,7 @@ import {
   buildClaudeError,
   buildHostExecutionRequirement,
   buildSetupReport,
+  DEFAULT_MODEL_LABEL,
   normalizeTimeoutSeconds,
   parseClaudeJson,
   readPrompt,
@@ -214,7 +215,7 @@ function handleRun(options) {
     throw new Error(message);
   }
 
-  const model = resolveModel(options.model);
+  const model = resolveModel(options.model) ?? DEFAULT_MODEL_LABEL;
   if (result.status !== 0 || parsed.isError) {
     const error = buildClaudeError(parsed, result.status);
     if (options.json) {

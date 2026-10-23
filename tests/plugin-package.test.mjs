@@ -120,3 +120,13 @@ test("readme explains that Codex runs a cached plugin copy", async () => {
   assert.match(readme, /~\/\.codex\/plugins\/cache/);
   assert.match(readme, /rerun `codex plugin add/);
 });
+
+test("packaged skill leaves the default model to Claude Code", async () => {
+  const skillPath = path.join(repoRoot, "plugins/claude-code/skills/claude-code-bridge/SKILL.md");
+  const skill = await fs.readFile(skillPath, "utf8");
+  const readme = await fs.readFile(path.join(repoRoot, "README.md"), "utf8");
+
+  assert.match(skill, /If the user names no model, omit `--model`/);
+  assert.doesNotMatch(skill, /`sonnet`: default for/);
+  assert.match(readme, /omitted to use your Claude Code default/);
+});

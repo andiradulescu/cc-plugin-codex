@@ -6,7 +6,7 @@ The plugin is implemented as a Codex skill plus a small runner script. That keep
 
 - Codex decides when a Claude pass is useful.
 - The skill invokes `claude -p` with JSON output.
-- Model selection is explicit: `fable`, `opus`, `sonnet`, `haiku`, or a full model ID such as `claude-fable-5-1`.
+- Model selection is explicit: `fable`, `opus`, `sonnet`, `haiku`, or a full model ID such as `claude-fable-5-1`, or omitted to use your Claude Code default.
 
 ## Prerequisites
 

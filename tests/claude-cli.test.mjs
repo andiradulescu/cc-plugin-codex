@@ -216,15 +216,17 @@ test("runChecked writes input to the command stdin", () => {
   assert.equal(result.stdout, "from stdin");
 });
 
-test("resolveModel defaults blank values to sonnet", () => {
-  assert.equal(resolveModel(undefined), "sonnet");
-  assert.equal(resolveModel("  "), "sonnet");
+test("resolveModel returns null for blank values so Claude Code picks its default", () => {
+  assert.equal(resolveModel(undefined), null);
+  assert.equal(resolveModel("  "), null);
   assert.equal(resolveModel(" opus "), "opus");
   assert.equal(resolveModel("claude-fable-5-1"), "claude-fable-5-1");
 });
 
-test("buildClaudeArgs passes the default model when none is given", () => {
-  assert.match(buildClaudeArgs({}).join(" "), /--model sonnet/);
+test("buildClaudeArgs omits --model when none is given", () => {
+  assert.equal(buildClaudeArgs({}).includes("--model"), false);
+  assert.equal(buildClaudeArgs({ model: " " }).includes("--model"), false);
+  assert.match(buildClaudeArgs({ model: "opus" }).join(" "), /--model opus/);
 });
 
 test("readPrompt only reads stdin when no prompt or prompt file is given", () => {

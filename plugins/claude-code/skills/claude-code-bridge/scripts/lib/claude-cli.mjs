@@ -3,7 +3,8 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 
-export const DEFAULT_MODEL = "sonnet";
+// Reported as the model when none is requested and Claude Code uses its configured default (/model, ANTHROPIC_MODEL, settings).
+export const DEFAULT_MODEL_LABEL = "default";
 // Source: https://code.claude.com/docs/en/model-config#adjust-effort-level
 export const ALLOWED_EFFORTS = new Set(["low", "medium", "high", "xhigh", "max"]);
 
@@ -77,8 +78,9 @@ export function readPrompt({ prompt, promptFile, readStdin = () => "" } = {}) {
   throw new Error("A prompt is required. Pass --prompt, --prompt-file, or pipe stdin.");
 }
 
+// Returns null when no model is requested, so --model is omitted and Claude Code picks its configured default.
 export function resolveModel(model) {
-  return trimToNull(model) ?? DEFAULT_MODEL;
+  return trimToNull(model);
 }
 
 export function normalizeEffort(effort) {
@@ -130,7 +132,10 @@ export function buildClaudeArgs(options) {
     "--settings", SANDBOX_SETTINGS
   ];
 
-  args.push("--model", resolveModel(options.model));
+  const model = resolveModel(options.model);
+  if (model) {
+    args.push("--model", model);
+  }
 
   const effort = normalizeEffort(options.effort);
   if (effort) {

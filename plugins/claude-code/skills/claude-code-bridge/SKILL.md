@@ -16,8 +16,9 @@ Use this skill when the user wants work delegated to Claude Code instead of stay
 
 ## Model routing
 
+- If the user names no model, omit `--model` so Claude Code uses the user's configured default (their `/model` choice, `ANTHROPIC_MODEL`, or the account default). The output then reports `model: "default"`; `modelsUsed` shows which model actually ran.
 - `fable`: use Claude Fable for complex, long-running work that benefits from sustained autonomous investigation and verification.
-- `sonnet`: default for normal implementation, review, and debugging work.
+- `sonnet`: use for normal implementation, review, and debugging work when the user asks for Sonnet.
 - `opus`: use for harder architectural reasoning, deeper debugging, or pressure-testing a design.
 - `haiku`: use for quick lightweight passes, short summaries, and cheap sanity checks.
 - With `--permission-mode plan`, Claude Code runs the `haiku` alias on Sonnet. For a read-only Haiku pass, pass a full Haiku model ID such as `claude-haiku-5-5`.
